@@ -24,7 +24,7 @@ def get_player_ids():
 
 
 if __name__ == "__main__":
-    # Team Data takes about 30 seconds
+    # Player Data takes about 200 seconds
     start_time = time.time()
     ids = get_player_ids()
     players = [Player(id) for id in ids]
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     for player in players:
         print(player.getId())
         player.setDetails(get_player_details(player.getId()))
-        if (player.getPosition() != "G"):
-            player.setStats(get_player_stats(player.getId()))
+        player.setStats(get_player_stats(player.getId(), player.getPosition() != "G"))
+        
 
     print("Player data takes this many seconds: " + str(time.time() - start_time))
