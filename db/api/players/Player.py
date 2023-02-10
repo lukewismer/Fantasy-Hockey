@@ -19,4 +19,7 @@ class Player:
     def setStats(self, stats):
         self.stats = stats
 
+    def getPosition(self):
+        return self.details["positionCode"]
+
     
