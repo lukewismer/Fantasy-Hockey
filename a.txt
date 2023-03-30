@@ -1,0 +1,154 @@
+Here is my PlayerClass from the Player.py file: 
+
+class PlayerClass:
+    def __init__(self, id, details = {}, stats={}):
+        self.id = id
+        self.details = details
+        self.stats = stats
+
+    def setDetails(self, details):
+        self.details = details
+
+    def getDetails(self):
+        return self.details
+
+    def getId(self):
+        return self.id
+
+    def getStats(self):
+        return self.stats
+
+    def setStats(self, stats):
+        self.stats = stats
+
+    def getPosition(self):
+        return self.details["positionCode"]
+
+
+Here is my get get_player_details(id) from my playerDetails.py file:
+
+import requests
+
+def get_player_details(id):
+    r = requests.get(f"https://statsapi.web.nhl.com/api/v1/people/{id}")
+    data = r.json()["people"][0]
+    return {
+        "id": id,
+        "name": data["fullName"] if check_dict(data, "fullName") else "",
+        "number": data["primaryNumber"] if check_dict(data, "primaryNumber") else "",
+        "birthDate": data["birthDate"] if check_dict(data, "birthDate") else "",
+        "age": data["currentAge"] if check_dict(data, "currentAge") else "",
+        "nationality": data["nationality"] if check_dict(data, "nationality") else "",
+        "height": data["height"] if check_dict(data, "height") else "",
+        "weight": data["weight"] if check_dict(data, "weight") else "",
+        "shootsCatches": data["shootsCatches"] if check_dict(data, "shootsCatches") else "",
+        "positionCode": data["primaryPosition"]["code"] if check_dict(data, "primaryPosition") else "",
+        "positionName": data["primaryPosition"]["name"] if check_dict(data, "primaryPosition") else "",
+        "teamID": data["currentTeam"]["id"] if check_dict(data, "currentTeam") else ""
+    }
+
+def check_dict(data, key):
+    if key in data:
+        return True
+    return False
+
+Here is my get_stats_details(id) from playerStats.py file:
+
+import requests
+from playerDetails import check_dict
+
+
+
+def get_player_stats(id, isSkater):
+    r = requests.get(f"https://statsapi.web.nhl.com/api/v1/people/{id}/stats?stats=yearByYear")
+    data = r.json()["stats"][0]["splits"]
+    stats = []
+    for season in data:
+        if season["league"]["name"] == "National Hockey League":
+            if (isSkater):
+                stats.append({
+                    "year": season["season"],
+                    "teamId": season["team"]["id"],
+                    "goals": season["stat"]["goals"],
+                    "assists": season["stat"]["assists"],
+                    "points": season["stat"]["points"],
+                    "gamesPlayed": season["stat"]["games"],
+                    "shots": season["stat"]["shots"],
+                    "hits": season["stat"]["hits"],
+                    "blocks": season["stat"]["blocked"] 
+                })
+            else:
+                stats.append({
+                    "year": season["season"],
+                    "teamId": season["team"]["id"],
+                    "games": season["stat"]["games"],
+                    "wins": season["stat"]["wins"],
+                    "saves": season["stat"]["saves"],
+                    "shutouts": season["stat"]["shutouts"],
+                    "losses": season["stat"]["losses"],
+                    "otl": season["stat"]["ot"] if check_dict(season["stat"], "ot") else "",
+                    "goalsAgainst": season["stat"]["goalsAgainst"],
+                })
+
+    return stats
+
+Here is my players.py file where I connect to database and store the info in the database: 
+
+
+
+import time, sys
+import requests
+
+from Player import PlayerClass 
+from playerStats import get_player_stats
+from playerDetails import get_player_details
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
+cred = credentials.Certificate("../serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
+
+db=firestore.client()
+
+players_collection = db.collection('players')
+
+
+def get_player_ids():
+    # Gets all player ids for the league
+    r = requests.get(f"https://statsapi.web.nhl.com/api/v1/teams?expand=team.roster")
+    data = r.json()
+    player_ids = []
+    for team in data["teams"]:
+        player_ids.append([player["person"]["id"] for player in team["roster"]["roster"]])
+    return sum(player_ids, []) # Flatten 2d list https://www.geeksforgeeks.org/python-ways-to-flatten-a-2d-list/
+        
+
+def get_all_players_data():
+    ids = get_player_ids()
+    players = [PlayerClass(id) for id in ids]
+
+    for player in players:
+        print(player.getId())
+        player.setDetails(get_player_details(player.getId()))
+        player.setStats(get_player_stats(player.getId(), player.getPosition() != "G"))
+
+    return players
+
+if __name__ == "__main__":
+    # Player Data takes about 200 seconds
+    start_time = time.time()
+    ids = get_player_ids()
+    players = [PlayerClass(id) for id in ids]
+
+    for player in players:
+        print(player.getId())
+        player.setDetails(get_player_details(player.getId()))
+        player.setStats(get_player_stats(player.getId(), player.getPosition() != "G"))
+
+        data = {"player_details": player.getDetails(), "player_stats": player.getStats()}
+        players_collection.document(str(player.getId())).set(data)
+
+    print("Player data takes this many seconds: " + str(time.time() - start_time))
+
+Can you refactor this code to make it more efficient and cleaner using OOP principles?

@@ -1,15 +1,16 @@
 import requests
-from playerDetails import check_dict
 
-
-
-def get_player_stats(id, isSkater):
+def get_player_stats(id, is_skater):
     r = requests.get(f"https://statsapi.web.nhl.com/api/v1/people/{id}/stats?stats=yearByYear")
     data = r.json()["stats"][0]["splits"]
+
+    def check_dict(data, key):
+        return key in data
+
     stats = []
     for season in data:
         if season["league"]["name"] == "National Hockey League":
-            if (isSkater):
+            if is_skater:
                 stats.append({
                     "year": season["season"],
                     "teamId": season["team"]["id"],
@@ -19,7 +20,7 @@ def get_player_stats(id, isSkater):
                     "gamesPlayed": season["stat"]["games"],
                     "shots": season["stat"]["shots"],
                     "hits": season["stat"]["hits"],
-                    "blocks": season["stat"]["blocked"] 
+                    "blocks": season["stat"]["blocked"]
                 })
             else:
                 stats.append({
@@ -33,3 +34,5 @@ def get_player_stats(id, isSkater):
                     "otl": season["stat"]["ot"] if check_dict(season["stat"], "ot") else "",
                     "goalsAgainst": season["stat"]["goalsAgainst"],
                 })
+
+    return stats
