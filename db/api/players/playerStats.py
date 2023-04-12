@@ -20,7 +20,12 @@ def get_player_stats(id, is_skater):
                     "gamesPlayed": season["stat"]["games"],
                     "shots": season["stat"]["shots"],
                     "hits": season["stat"]["hits"],
-                    "blocks": season["stat"]["blocked"]
+                    "blocks": season["stat"]["blocked"],
+                    "timeOnIce": season["stat"]["timeOnIce"],
+                    "powerPlayPoints": season["stat"]["powerPlayPoints"],
+                    "powerPlayTimeOnIce": season["stat"]["powerPlayTimeOnIce"],
+                    "plusMinus": season["stat"]["plusMinus"],
+                    "shotPct": season["stat"]["shotPct"]
                 })
             else:
                 stats.append({
