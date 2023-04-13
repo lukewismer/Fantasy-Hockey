@@ -3,6 +3,8 @@ import requests
 
 ## TO-DO make the schedule
 def get_team_schedule(id):
+    if (id == 11):
+        return {"dates": []}
     
     start_date = "2022-10-07" # Start date of NHL season 2022
     end_date = "2023-04-16" # End date of NHL season 2023

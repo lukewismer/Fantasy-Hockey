@@ -43,8 +43,9 @@ players_collection = db.collection('players')
 teams_collection = db.collection('teams')
 
 
-position_codes = ['D'] # Can change position code to whatever positions you want, ex) ["C", "L", "R"] for all forwards
+position_codes = ["D"] # Can change position code to whatever positions you want, ex) ["C", "L", "R"] for all forwards
 filtered_players = []
+
 
 # Gets all player
 for code in position_codes:
@@ -68,11 +69,24 @@ for player in filtered_players:
     shotPct = []
     timeOnIce = []
     powerPlayTimeOnIce = []
+    teamPoints = []
+    teamGoalsPerGame = []
 
     birthyear = player["player_details"]["birthDate"][:4]
     name = player["player_details"]["name"]
+    id = player["player_details"]["id"]
 
     for player_stats in player["player_stats"]:
+      # Query for team record
+        team_id = player_stats["teamId"]
+        team_data = list(teams_collection.where('team_details.id', '==', team_id).stream())
+        for team in team_data:
+          for season in team.to_dict()["team_stats"]:
+            if (season["season"] == player_stats["year"]):
+              teamPoints.append(float(season["ptPctg"]))
+              teamGoalsPerGame.append(season["goalsPerGame"])
+              break
+
         age.append(int(player_stats["year"][:4]) - int(birthyear))
         shots.append(player_stats["shots"])
         games_played.append(player_stats["gamesPlayed"])
@@ -100,20 +114,27 @@ for player in filtered_players:
     shotPct_arr = np.array(shotPct)
     timeOnIce_arr = np.array(np.divide(timeOnIce_float, games_played))
     powerPlayTimeOnIce_arr = np.array(np.divide(powerPlayTimeOnIce_float, games_played))
+    teamPoints_arr = np.array(teamPoints)
+    teamGoalsPerGame_arr= np.array(teamGoalsPerGame)
     games_arr = np.array(games_played)
     
-    new_players.append({"name": name, "age": age_arr, "shots" : shots_arr, "games_played": games_arr, "goals": goals_arr, "assists": assists_arr, "points": points_arr, "powerplaypoints": powerplaypoints_arr, "plusMinus": plusMinus_arr, "hits": hits_arr, "shotPct": shotPct_arr, "timeOnIce": timeOnIce_arr, "powerPlayTimeOnIce": powerPlayTimeOnIce_arr})
+    new_players.append({"id": id, "name": name, "age": age_arr, "shots" : shots_arr, "games_played": games_arr, "goals": goals_arr, "assists": assists_arr, "points": points_arr, "powerplaypoints": powerplaypoints_arr,
+                        "plusMinus": plusMinus_arr, "hits": hits_arr, "shotPct": shotPct_arr, "timeOnIce": timeOnIce_arr, "powerPlayTimeOnIce": powerPlayTimeOnIce_arr, "teamPoints": teamPoints_arr, "teamGoalsPerGame": teamGoalsPerGame_arr})
 
 
 all_data = []
 for player in new_players:
+  try:
     data = np.column_stack((
         player['age'][:-1], player['shots'][:-1], player['goals'][:-1], player['assists'][:-1],
         player['powerplaypoints'][:-1], player['plusMinus'][:-1], player['hits'][:-1],
-        player['timeOnIce'][:-1], player['powerPlayTimeOnIce'][:-1]
+        player['timeOnIce'][:-1], player['powerPlayTimeOnIce'][:-1], player["shotPct"][:-1],
+        player["teamPoints"][:-1], player["teamGoalsPerGame"][:-1]
     ))
     target = player['points'][1:]
     all_data.append((data, target))
+  except:
+    print(player["name"])
 
 latest_season_data = []
 players_with_data =[]
@@ -122,7 +143,8 @@ for player in new_players:
         latest_data = np.column_stack((
             player['age'][-1], player['shots'][-1], player['goals'][-1], player['assists'][-1],
             player['powerplaypoints'][-1], player['plusMinus'][-1], player['hits'][-1],
-            player['timeOnIce'][-1], player['powerPlayTimeOnIce'][-1]
+            player['timeOnIce'][-1], player['powerPlayTimeOnIce'][-1], player["shotPct"][-1],
+        player["teamPoints"][-1], player["teamGoalsPerGame"][-1]
         ))
         latest_season_data.append(latest_data)
         players_with_data.append(player)
@@ -142,11 +164,8 @@ X_test_scaled = scaler.transform(X_test)
 X_latest_season_scaled = scaler.transform(X_latest_season)
 
 
-
 train_dataset = tf.data.Dataset.from_tensor_slices((X_train_scaled, y_train)).batch(32)
 test_dataset = tf.data.Dataset.from_tensor_slices((X_test_scaled, y_test)).batch(32)
-
-
 
 
 
@@ -172,3 +191,12 @@ print(len(players_with_data))
 
 for i in range(len(players_with_data)):
   print(f"{players_with_data[i]['name']} is predicted to have {predicted_points_next_year[i]} ppg next year or {predicted_points_next_year[i] * 82} total points\n")
+
+  player_doc_ref = players_collection.document(str(players_with_data[i]["id"]))
+
+  player_doc_ref.update({"Predictions": {
+      "Point_Prediction_Per_Game": predicted_points_next_year[i],
+      "Point_Prediction": predicted_points_next_year[i] * 82
+  }})
+
+

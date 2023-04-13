@@ -23,7 +23,7 @@ def get_teams_data():
 
 
 def get_team_ids(data = get_teams_data()):
-    teamIds = []
+    teamIds = [11]
     for team in data:
         teamIds.append(team["id"])
     return teamIds
@@ -34,6 +34,7 @@ def get_all_team_data():
     
     data = get_teams_data()
     ids = get_team_ids(data)
+    
     teams = [Team(id) for id in ids]
     for team in teams:
         team.setDetails(get_team_details(team.getId()))
