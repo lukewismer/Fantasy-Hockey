@@ -18,5 +18,6 @@ def get_player_details(id):
         "shootsCatches": data.get("shootsCatches", ""),
         "positionCode": data["primaryPosition"]["code"] if check_dict(data, "primaryPosition") else "",
         "positionName": data["primaryPosition"]["name"] if check_dict(data, "primaryPosition") else "",
-        "teamID": data["currentTeam"]["id"] if check_dict(data, "currentTeam") else ""
+        "teamID": data["currentTeam"]["id"] if check_dict(data, "currentTeam") else "",
+        "active": data["active"]
     }

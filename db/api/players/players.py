@@ -15,42 +15,46 @@ firebase_admin.initialize_app(cred)
 
 db=firestore.client()
 
-players_collection = db.collection('players')
+players_collection = db.collection("players")
+active_players_collection = db.collection('active_players')
+old_players_collection = db.collection('old_players')
+teams_collection = db.collection('teams_v2')
 
 
 def get_player_ids():
-    # Gets all player ids for the league
-    r = requests.get(f"https://statsapi.web.nhl.com/api/v1/teams?expand=team.roster")
-    data = r.json()
-    player_ids = []
-    for team in data["teams"]:
-        player_ids.append([player["person"]["id"] for player in team["roster"]["roster"]])
-    return sum(player_ids, []) # Flatten 2d list https://www.geeksforgeeks.org/python-ways-to-flatten-a-2d-list/
-        
+    players = [player.to_dict()["player_details"]["id"] for player in players_collection.get()]
+    teams = teams_collection.get()
+    ids = set()
 
-def get_all_players_data():
-    ids = get_player_ids()
-    players = [Player(id) for id in ids]
-
-    for player in players:
-        print(player.get_id())
-        player.setDetails(get_player_details(player.get_id()))
-        player.setStats(get_player_stats(player.get_id(), player.getPosition() != "G"))
-
-    return players
+    for team in teams:
+        team = team.to_dict()
+        for year_name, year_data in team["years"].items():
+            
+            if (year_data["Roster"] and year_data["Roster"] != None):
+                for player in year_data["Roster"]:
+                    if (player  in players):
+                        ids.add(player)
+    return ids
 
 if __name__ == "__main__":
     # Player Data takes about 200 seconds
     start_time = time.time()
     ids = get_player_ids()
+    print(len(ids))
     players = [Player(id) for id in ids]
+    counter = 0
 
     for player in players:
-        print(player.get_id())
+        counter +=1
+        print(str(player.get_id()) + " Count: " + str(counter))
         player.set_details(get_player_details(player.get_id()))
         player.set_stats(get_player_stats(player.get_id(), player.get_position() != "G"))
 
         data = {"player_details": player.get_details(), "player_stats": player.get_stats()}
-        players_collection.document(str(player.get_id())).set(data)
+
+        if player.get_details()["active"] == True:
+            active_players_collection.document(str(player.get_id())).set(data)
+        else:
+            old_players_collection.document(str(player.get_id())).set(data)
 
     print("Player data takes this many seconds: " + str(time.time() - start_time))

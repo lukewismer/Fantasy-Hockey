@@ -1,17 +1,24 @@
 class Team:
-    def __init__(self, id, details = {}, roster= {}, schedule={}, stats={}):
+    def __init__(self, id, details = {}, roster= {}, schedule={}, stats={}, years={}):
         self.id = id
         self.details = details
         self.roster = roster
         self.schedule = schedule
         self.stats = stats
+        self.years = years
 
     def setDetails(self, details):
         self.details = details
 
     def getDetails(self):
         return self.details
+    
+    def addYear(self, year, year_roster, year_stats):
+        self.years[year] = {"Roster": year_roster, "Stats": year_stats}
 
+    def getYears(self):
+        return self.years
+    
     def getId(self):
         return self.id
 

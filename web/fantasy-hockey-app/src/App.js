@@ -5,10 +5,9 @@ import { auth } from './firebase';
 
 import LoginPage from './Login/Login';
 import SignupPage from './SignUp/SignUp';
-
-
-
-
+import UserHome from './UserHome/UserHome';
+import { UserProvider } from './UserContext';
+import Teams from './Team/Team';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -25,14 +24,18 @@ const App = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/">
-          <Route index element={<LoginPage />} />
-          <Route path="signup" element={<SignupPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <UserProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/">
+            <Route index element={<LoginPage />} />
+            <Route path="signup" element={<SignupPage />} />
+            <Route path="home" element={<UserHome />} />
+            <Route path="teams" element={<Teams />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </UserProvider>
   );
 };
 

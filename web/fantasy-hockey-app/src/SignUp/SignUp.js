@@ -1,19 +1,33 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import './SignUp.css';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '../UserContext';
 
 const SignupPage = () => {
+  const { setCurrentUser } = useUser();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      // Redirect or update the app state on successful signup
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      await setDoc(doc(db, "users", user.uid), {
+        "username": username, 
+        "email": email
+      })
+
+      setCurrentUser({uid: user.uid, username, email});
+
+      navigate({pathname : "/home"})
     } catch (error) {
       setErrorMessage(error.message);
     }
