@@ -162,6 +162,7 @@ const Teams = () => {
                 rowsPerPageOptions={[5]}
                 className={classes.row}
                 getRowId={(row) => row.name}
+                hideFooter
               />
             ) : (
               <DataGrid
@@ -171,6 +172,7 @@ const Teams = () => {
                 rowsPerPageOptions={[5]}
                 className={classes.row}
                 getRowId={(row) => row.name}
+                hideFooter
               />
             )}
             </>

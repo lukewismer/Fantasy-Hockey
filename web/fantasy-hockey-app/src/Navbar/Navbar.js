@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '@material-ui/core/Button';
+import { useUser } from '../UserContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { currentUser } = useUser();
 
   const handleClick = (route) => {
     navigate(route);
@@ -21,10 +23,13 @@ const Navbar = () => {
             <Button onClick={() => handleClick('/home')} className="navbar-link">Home</Button>
           </li>
           <li className="navbar-item">
-            <Button onClick={() => handleClick('/user-team')} className="navbar-link">Your Team</Button>
+            <Button onClick={() => handleClick(`/teams?team_id=${currentUser.uid}`)} className="navbar-link">Your Team</Button>
           </li>
           <li className="navbar-item">
             <Button onClick={() => handleClick('/players')} className="navbar-link">Players</Button>
+          </li>
+          <li className="navbar-item">
+            <Button onClick={() => handleClick('/lineup')} className="navbar-link">Lineup</Button>
           </li>
         </ul>
       </div>
