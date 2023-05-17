@@ -22,7 +22,6 @@ def get_player_stats(id, is_skater):
                     "assists": season["stat"]["assists"],
                     "points": season["stat"]["points"],
                     "gamesPlayed": season["stat"]["games"],
-                    "pims": season["stat"]["pim"],
                     "shots": season["stat"]["shots"],
                     "hits": season["stat"]["hits"] if "hits" in season["stat"] else 0,
                     "blocks": season["stat"]["blocked"] if "blocked" in season["stat"] else 0,

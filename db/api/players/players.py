@@ -6,6 +6,7 @@ import requests
 from Player import Player
 from playerStats import get_player_stats
 from playerDetails import get_player_details
+from playerSeasonStats import get_player_seasonStats
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -22,7 +23,7 @@ teams_collection = db.collection('teams_v2')
 
 
 def get_player_ids():
-    players = [player.to_dict()["player_details"]["id"] for player in players_collection.get()]
+    players = [player.to_dict()["player_details"]["id"] for player in active_players_collection.get()]
     teams = teams_collection.get()
     ids = set()
 
@@ -48,13 +49,15 @@ if __name__ == "__main__":
         counter +=1
         print(str(player.get_id()) + " Count: " + str(counter))
         player.set_details(get_player_details(player.get_id()))
-        player.set_stats(get_player_stats(player.get_id(), player.get_position() != "G"))
+        player.set_seasonStats(get_player_seasonStats(player.get_id(), player.get_position() != "G"))
+        
 
-        data = {"player_details": player.get_details(), "player_stats": player.get_stats()}
+        data = {"player_details": player.get_details(), "player_seasonStats": player.get_seasonStats()}
 
+        
         if player.get_details()["active"] == True:
-            active_players_collection.document(str(player.get_id())).set(data)
-        else:
-            old_players_collection.document(str(player.get_id())).set(data)
+            active_players_collection.document(str(player.get_id())).set(data, merge=True)
+        #else:
+        #    old_players_collection.document(str(player.get_id())).set(data, merge=True)
 
     print("Player data takes this many seconds: " + str(time.time() - start_time))
