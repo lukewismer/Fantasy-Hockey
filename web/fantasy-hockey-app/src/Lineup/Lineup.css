@@ -1,0 +1,32 @@
+.lineup-container {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .lineup-title {
+    text-align: center;
+    color: #007bff;
+    font-size: 2.5em;
+    margin-bottom: 20px;
+  }
+  
+  .lineup-table-container,
+  .lineup-lower-table-container {
+    margin-bottom: 20px;
+  }
+  
+  .lineup-individual-table-container,
+  .lineup-lower-individual-table-container {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .lineup-position-header {
+    color: #007bff;
+    margin-bottom: 15px;
+  }
+  

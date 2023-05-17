@@ -20,16 +20,16 @@ const Navbar = () => {
         </div>
         <ul className="navbar-menu">
           <li className="navbar-item">
-            <Button onClick={() => handleClick('/home')} className="navbar-link">Home</Button>
+            <Button onClick={() => handleClick('/home')} className="navbar-link" style={{ color: '#fff' }}>Home</Button>
           </li>
           <li className="navbar-item">
-            <Button onClick={() => handleClick(`/teams?team_id=${currentUser.uid}`)} className="navbar-link">Your Team</Button>
+            <Button onClick={() => handleClick(`/teams?team_id=${currentUser.uid}`)} className="navbar-link" style={{ color: '#fff' }}>Your Team</Button>
           </li>
           <li className="navbar-item">
-            <Button onClick={() => handleClick('/players')} className="navbar-link">Players</Button>
+            <Button onClick={() => handleClick('/players')} className="navbar-link" style={{ color: '#fff' }}>Players</Button>
           </li>
           <li className="navbar-item">
-            <Button onClick={() => handleClick('/lineup')} className="navbar-link">Lineup</Button>
+            <Button onClick={() => handleClick('/lineup')} className="navbar-link" style={{ color: '#fff' }}>Lineup</Button>
           </li>
         </ul>
       </div>

@@ -4,29 +4,48 @@ import { getDocs, getDoc, doc, query, where, collection, onSnapshot } from 'fire
 import { db } from '../firebase';
 import { useLocation } from 'react-router-dom';
 import { DataGrid } from '@mui/x-data-grid';
-import { makeStyles } from '@material-ui/core/styles';
+import { Container, Typography, makeStyles } from '@material-ui/core';
+
 import Navbar from '../Navbar/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
+  root: {
+    flexGrow: 1,
+  },
+  header: {
+    marginBottom: theme.spacing(2),
+    textAlign: 'center'
+  },
+  title: {
+    marginTop: theme.spacing(2),
+  },
+  dataTable: {
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  },
+  footer: {
+    marginTop: theme.spacing(4),
+    textAlign: 'center',
+    padding: theme.spacing(2),
+    backgroundColor: '#f8f9fa',
+  },
   row: {
     '&:nth-of-type(odd)': {
-      backgroundColor: 'rgba(0, 0, 0, 0.05)', // Light grey for odd rows
+      backgroundColor: 'rgba(0, 0, 0, 0.05)',
     },
   },
-});
+}));
 
 
 const UserHome = () => {
-  const { currentUser, managers, setManagers, leagueSettings, setLeagueSettings } = useUser();
+  const { currentUser, managers, setManagers, setLeagueSettings, setPlayers, setTeams } = useUser();
   const [userData, setUserData] = useState(null);
   const location = useLocation();
   const unsubscribeRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const classes = useStyles();
-  const navigate = useNavigate();
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +56,8 @@ const UserHome = () => {
       }
       await fetchManagers();
       await fetchLeagueSettings();
+      await fetchTeamData();
+      await fetchPlayerData();
       setIsLoading(false);
     };
   
@@ -126,6 +147,36 @@ const UserHome = () => {
       });
     });
   }
+
+  const fetchTeamData = async () => {
+    const teamQuery = query(
+      collection(db, 'teams_v2')
+    );
+
+    let allTeamData = []
+    unsubscribeRef.current = onSnapshot(teamQuery, async (querySnapshot) => {
+
+      querySnapshot.forEach((doc) => {
+        const teamData = doc.data();
+        allTeamData.push(teamData)
+      });
+    });
+    setTeams(allTeamData)
+  }
+
+  const fetchPlayerData = async () => {
+    const playerQuery = query(
+      collection(db, 'active_players')
+    );
+
+    unsubscribeRef.current = onSnapshot(playerQuery, async (querySnapshot) => {
+
+      querySnapshot.forEach((doc) => {
+        const playerData = doc.data();
+        setPlayers(playerData)
+      });
+    });
+  }
   
   const fetchDocumentById = async (collectionName, documentId) => {
     // Get a reference to the specific document by its document ID
@@ -142,10 +193,15 @@ const UserHome = () => {
     }
   };
   
-  
+  const fetchManagerData = (manager) => {
+    let stats  = {"Normal": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0},
+     "Fantasy": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0}}
+    for (player in manager.player_data){
+      
+    }
+  }
 
-  const sortedRows = managers
-  .map((manager, index) => ({
+  const sortedRows = managers.map((manager, index) => ({
     id: index,
     username: manager.details.username,
     score: manager.details.score,
@@ -172,29 +228,42 @@ const UserHome = () => {
       },
     },
     { field: 'score', headerName: 'Score', width: 150, sortable: true },
+    { field: 'score', headerName: 'Goals', width: 150, sortable: true },
+    { field: 'score', headerName: 'Assists', width: 150, sortable: true },
+    { field: 'score', headerName: 'Shots', width: 150, sortable: true },
+    { field: 'score', headerName: 'Hits', width: 150, sortable: true },
+    { field: 'score', headerName: 'Blocks', width: 150, sortable: true },
+    { field: 'score', headerName: 'Wins', width: 150, sortable: true },
+    { field: 'score', headerName: 'Saves', width: 150, sortable: true },
+    { field: 'score', headerName: 'Shutouts', width: 150, sortable: true },
   ];
   
-  
   return (
-    <div className="home-page">
+    <Container className={classes.root}>
       {isLoading ? (
         <div>Loading...</div>
       ) : (
         <>
-          <header className="header">
+          <header className={classes.header}>
             {userData ? (
               <>
-                <h1>Welcome back, {userData.username}</h1>
-                <h2>Points: {userData.score}</h2>
+                <Typography variant="h4" component="h1">
+                  Welcome back, {userData.username}
+                </Typography>
+                <Typography variant="h6" component="h2">
+                  Points: {userData.score}
+                </Typography>
               </>
             ) : (
-              <h1>Loading</h1>
+              <Typography variant="h4" component="h1">
+                Loading
+              </Typography>
             )}
           </header>
           <Navbar />
           <main>
             {managers && managers.length > 0 && (
-              <div style={{ height: 400, width: '80%' }}>
+              <div style={{ height: '100%', width: '100%' }} className={classes.dataTable}>
                 <DataGrid
                   classes={{row: classes.row}}
                   rows={sortedRows}
@@ -202,6 +271,7 @@ const UserHome = () => {
                   pageSize={5}
                   rowsPerPageOptions={[5]}
                   disableSelectionOnClick
+                  hideFooter
                   sortModel={[
                     {
                       field: 'score',
@@ -212,14 +282,15 @@ const UserHome = () => {
               </div>
             )}
           </main>
-          <footer className="footer">
-            <p>&copy; 2023 FantasyHockeyRealm. All rights reserved.</p>
+          <footer className={classes.footer}>
+            <Typography variant="body2" color="textSecondary" component="p">
+              &copy; 2023 FantasyHockeyRealm. All rights reserved.
+            </Typography>
           </footer>
         </>
       )}
-    </div>
+    </Container>
   );
-  
 };  
 
 export default UserHome;

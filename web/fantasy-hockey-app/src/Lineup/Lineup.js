@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
-import { DataGrid } from '@mui/x-data-grid';
 import { useUser } from '../UserContext';
 import Navbar from '../Navbar/Navbar';
-import {arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import TableRow from './TableRow';
-import { TableCell } from '@material-ui/core';
+import {arrayMove} from '@dnd-kit/sortable';
 import SortableTable from './SortableTable';
+import './Lineup.css'
 
 const useStyles = makeStyles({
     container: {
@@ -48,7 +44,7 @@ const useStyles = makeStyles({
 const Lineup = () => {
   const classes = useStyles();
   const [currentManager, setCurrentManager] = useState(null);
-  const { currentUser, managers, leagueSettings } = useUser();
+  const { currentUser, managers, leagueSettings, teams } = useUser();
 
   const [ leftWingPlayers, setLeftWingPlayers ] = useState([]);
   const [ rightWingPlayers, setRightWingPlayers ] = useState([]);
@@ -106,22 +102,38 @@ const Lineup = () => {
   
     getPositions();
   }, [leagueSettings]);
+
+  console.log(teams)
   
+  const findTeam = (teamId) => {
+    for (const team of teams){
+        console.log(team)
+        if (team.team_details.id == teamId){
+            return team;
+        }
+    }
+  }
+
 
   const players = currentManager?.player_data?.map((player, index) => {
     
+    const team = findTeam(player.player_details.teamID)
+    
+    //console.log("Player" + player.player_details.id + ", " + player.player_details.name)
+    //console.log("Team" + player.player_details.teamID + ", " + team.team_details.abbreviation)
+    //console.log("-")
+
     return {
       id: player.player_details.id,
       name: player.player_details.name,
-      team: player.player_details.teamID,
+      team: team.team_details.abbreviation,
       position: player.player_details.positionCode,
       ...player,
     };
   });
-
-  const getRowClassName = (params) => {
-    return !params.row.id.toString();
-  };  
+  
+  
+  
 
   useEffect(() => {
     const setPlayers = () => {
@@ -160,19 +172,19 @@ const Lineup = () => {
       });
     }
   }, []);
-  
 
   return (
     <>
       <Navbar />
-      <div className={classes.container}>
+      <div className={`lineup-container ${classes.container}`}>
+      <h1 className="lineup-title">Your Team Lineup</h1>
         {players && (
           <>
-            <div className={classes.tableContainer}>
-            <div className={classes.individualTableContainer}>
-                <h2>Left Wing</h2>
+            <div className={`lineup-table-container ${classes.tableContainer}`}>
+              <div className={`lineup-individual-table-container ${classes.individualTableContainer}`}>
+                <h2 className="lineup-position-header">Left Wing</h2>
                 <SortableTable
-                    players={leftWingPlayers}
+                  players={leftWingPlayers}
                     handleDragEnd={(event) => handleDragEnd(event, setLeftWingPlayers)}
                     columns={columns}
                     rosterSpots={positions["L"]}
@@ -183,10 +195,10 @@ const Lineup = () => {
                     }}
                 />
               </div>
-              <div className={classes.individualTableContainer}>
-                <h2>Center</h2>
+              <div className={`lineup-individual-table-container ${classes.individualTableContainer}`}>
+                <h2 className="lineup-position-header">Center</h2>
                 <SortableTable
-                    players={centrePlayers}
+                  players={centrePlayers}
                     handleDragEnd={(event) => handleDragEnd(event, setCentrePlayers)}
                     columns={columns}
                     rosterSpots={positions["C"]}
@@ -197,10 +209,10 @@ const Lineup = () => {
                     }}
                 />
               </div>
-              <div className={classes.individualTableContainer}>
-                <h2>Right Wing</h2>
+              <div className={`lineup-individual-table-container ${classes.individualTableContainer}`}>
+                <h2 className="lineup-position-header">Right Wing</h2>
                 <SortableTable
-                    players={rightWingPlayers}
+                  players={rightWingPlayers}
                     handleDragEnd={(event) => handleDragEnd(event, setRightWingPlayers)}
                     columns={columns}
                     rosterSpots={positions["R"]}
@@ -212,11 +224,11 @@ const Lineup = () => {
                 />
               </div>
             </div>
-            <div className={classes.lowerTableContainer}>
-              <div className={classes.lowerIndividualTableContainer}>
-                <h2>Defence</h2>
+            <div className={`lineup-lower-table-container ${classes.lowerTableContainer}`}>
+              <div className={`lineup-lower-individual-table-container ${classes.lowerIndividualTableContainer}`}>
+                <h2 className="lineup-position-header">Defence</h2>
                 <SortableTable
-                    players={defencePlayers}
+                  players={defencePlayers}
                     handleDragEnd={(event) => handleDragEnd(event, setDefencePlayers)}
                     columns={columns}
                     rosterSpots={positions["D"]}
@@ -227,10 +239,10 @@ const Lineup = () => {
                     }}
                 />
               </div>
-              <div className={classes.lowerIndividualTableContainer}>
-                <h2>Goalies</h2>
+              <div className={`lineup-lower-individual-table-container ${classes.lowerIndividualTableContainer}`}>
+                <h2 className="lineup-position-header">Goalies</h2>
                 <SortableTable
-                    players={goaliePlayers}
+                  players={goaliePlayers}
                     handleDragEnd={(event) => handleDragEnd(event, setGoaliePlayers)}
                     columns={columns}
                     rosterSpots={positions["G"]}

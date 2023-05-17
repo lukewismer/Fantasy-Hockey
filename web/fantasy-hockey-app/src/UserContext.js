@@ -22,6 +22,34 @@ export const UserProvider = ({ children }) => {
     return storedManagers ? JSON.parse(storedManagers) : [];
   });
 
+  const [teams, setTeams] = useState(() => {
+    const storedTeams = localStorage.getItem('teams');
+    if (storedTeams === null) {
+      return null;
+    }
+    try {
+      return JSON.parse(storedTeams);
+    } catch (e) {
+      console.error('Error parsing teams from localStorage', e);
+      return null;
+    }
+  });
+  
+
+  const [players, setPlayers] = useState(() => {
+    const storedPlayers = localStorage.getItem('players');
+    if (storedPlayers === null) {
+      return null;
+    }
+    try {
+      return JSON.parse(storedPlayers);
+    } catch (e) {
+      console.error('Error parsing players from localStorage', e);
+      return null;
+    }
+  });
+
+
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -42,6 +70,24 @@ export const UserProvider = ({ children }) => {
     localStorage.setItem('managers', JSON.stringify(managers));
   }, [managers]);
 
+  useEffect(() => {
+    if (teams) {
+      localStorage.setItem('teams', JSON.stringify(teams))
+    } else {
+      localStorage.removeItem('teams')
+    }
+    
+  }, [teams])
+
+  useEffect(() => {
+    if (players) {
+      localStorage.setItem('players', JSON.stringify(players))
+    } else {
+      localStorage.removeItem('players')
+    }
+    
+  }, [players])
+
   const value = {
     currentUser,
     setCurrentUser,
@@ -49,6 +95,10 @@ export const UserProvider = ({ children }) => {
     setLeagueSettings,
     managers,
     setManagers,
+    teams, 
+    setTeams,
+    players,
+    setPlayers
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
