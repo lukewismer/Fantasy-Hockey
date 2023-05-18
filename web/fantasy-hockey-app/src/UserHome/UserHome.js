@@ -292,7 +292,7 @@ const UserHome = () => {
         );
       },
     },
-    { field: 'score', headerName: 'Score', width: 100, sortable: true },
+    { field: 'score', headerName: 'Score', width: 100, sortable: true},
     { field: 'goals', headerName: 'Goals', width: 85, sortable: true },
     { field: 'assists', headerName: 'Assists', width: 85, sortable: true },
     { field: 'shots', headerName: 'Shots', width: 85, sortable: true },
@@ -305,6 +305,7 @@ const UserHome = () => {
     { field: 'shutouts', headerName: 'Shutouts', width: 85, sortable: true },
     { field: 'goalsAgainst', headerName: 'GA', width: 85, sortable: true },
   ];
+  
   
   return (
     <Container className={classes.root}>
@@ -342,12 +343,6 @@ const UserHome = () => {
                   rowsPerPageOptions={[5]}
                   disableSelectionOnClick
                   hideFooter
-                  sortModel={[
-                    {
-                      field: 'score',
-                      sort: 'desc',
-                    },
-                  ]}
                 />
               </div>
               ) : (
@@ -360,12 +355,6 @@ const UserHome = () => {
                   rowsPerPageOptions={[5]}
                   disableSelectionOnClick
                   hideFooter
-                  sortModel={[
-                    {
-                      field: 'score',
-                      sort: 'desc',
-                    },
-                  ]}
                 />
               </div>
               )
