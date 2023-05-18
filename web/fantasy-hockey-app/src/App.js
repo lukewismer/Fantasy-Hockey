@@ -9,6 +9,7 @@ import UserHome from './UserHome/UserHome';
 import { UserProvider } from './UserContext';
 import Teams from './Team/Team';
 import Lineup from './Lineup/Lineup';
+import Players from './Players/Players';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -34,6 +35,7 @@ const App = () => {
             <Route path="home" element={<UserHome />} />
             <Route path="teams" element={<Teams />} />
             <Route path="lineup" element={<Lineup />} />
+            <Route path="players" element={<Players />} />
           </Route>
         </Routes>
       </BrowserRouter>

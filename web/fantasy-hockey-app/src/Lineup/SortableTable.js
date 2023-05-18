@@ -43,7 +43,7 @@ function SortableRow({ id, index, rowData, columns, classes, constantColumn, ...
       <TableCell>{constantColumn && constantColumn.cell(rowData, constantColumn.rosterSpot)}</TableCell>
 
       {columns.map((column) => (
-        <TableCell key={column.field}>{rowData[column.field]}</TableCell>
+        <TableCell key={column.field} style={column.field === 'name' ? {fontWeight: 'bold'} : {}}>{rowData[column.field]}</TableCell>
       ))}
     </TableRow>
   );

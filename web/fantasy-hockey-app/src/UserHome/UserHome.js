@@ -7,7 +7,6 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Container, Typography, makeStyles } from '@material-ui/core';
 
 import Navbar from '../Navbar/Navbar';
-import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
@@ -168,14 +167,17 @@ const UserHome = () => {
     const playerQuery = query(
       collection(db, 'active_players')
     );
-
+    const allPlayers = []
     unsubscribeRef.current = onSnapshot(playerQuery, async (querySnapshot) => {
 
+      
       querySnapshot.forEach((doc) => {
         const playerData = doc.data();
-        setPlayers(playerData)
+        allPlayers.push(playerData)
       });
     });
+
+    setPlayers(allPlayers)
   }
   
   const fetchDocumentById = async (collectionName, documentId) => {
@@ -196,9 +198,7 @@ const UserHome = () => {
   const fetchManagerData = (manager) => {
     let stats  = {"Normal": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0},
      "Fantasy": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0}}
-    for (player in manager.player_data){
-      
-    }
+    
   }
 
   const sortedRows = managers.map((manager, index) => ({
