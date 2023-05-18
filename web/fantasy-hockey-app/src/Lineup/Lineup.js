@@ -108,7 +108,7 @@ const Lineup = () => {
   const findTeam = (teamId) => {
     for (const team of teams){
         console.log(team)
-        if (team.team_details.id == teamId){
+        if (team.data.team_details.id == teamId){
             return team;
         }
     }
@@ -118,15 +118,11 @@ const Lineup = () => {
   const players = currentManager?.player_data?.map((player, index) => {
     
     const team = findTeam(player.player_details.teamID)
-    
-    //console.log("Player" + player.player_details.id + ", " + player.player_details.name)
-    //console.log("Team" + player.player_details.teamID + ", " + team.team_details.abbreviation)
-    //console.log("-")
 
     return {
       id: player.player_details.id,
       name: player.player_details.name,
-      team: team.team_details.abbreviation,
+      team: team.data.team_details.abbreviation,
       position: player.player_details.positionCode,
       ...player,
     };

@@ -1,54 +1,31 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { setItem, getItem, getAllItems, setItems, deleteAllItems } from './indexedDB';
+import { getDocs, getDoc, doc, query, where, collection, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
 
 const UserContext = createContext();
+const teamStoreName = 'teams';
+const playerStoreName = 'players';
+
 
 export const useUser = () => {
   return useContext(UserContext);
 };
 
 export const UserProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(() => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [leagueSettings, setLeagueSettings] = useState(null);
+  const [managers, setManagers] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [players, setPlayers] = useState([]);
+  const unsubscribeRef = useRef(null);
+
+  useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-
-  const [leagueSettings, setLeagueSettings] = useState(() => {
-    const storedSettings = localStorage.getItem('leagueSettings');
-    return storedSettings ? JSON.parse(storedSettings) : null;
-  });
-
-  const [managers, setManagers] = useState(() => {
-    const storedManagers = localStorage.getItem('managers');
-    return storedManagers ? JSON.parse(storedManagers) : [];
-  });
-
-  const [teams, setTeams] = useState(() => {
-    const storedTeams = localStorage.getItem('teams');
-    if (storedTeams === null) {
-      return null;
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
     }
-    try {
-      return JSON.parse(storedTeams);
-    } catch (e) {
-      console.error('Error parsing teams from localStorage', e);
-      return null;
-    }
-  });
-  
-
-  const [players, setPlayers] = useState(() => {
-    const storedPlayers = localStorage.getItem('players');
-    if (storedPlayers === null) {
-      return null;
-    }
-    try {
-      return JSON.parse(storedPlayers);
-    } catch (e) {
-      console.error('Error parsing players from localStorage', e);
-      return null;
-    }
-  });
-
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
@@ -59,6 +36,32 @@ export const UserProvider = ({ children }) => {
   }, [currentUser]);
 
   useEffect(() => {
+    const fetchSettingsAndManagers = async () => {
+      const storedSettings = localStorage.getItem('leagueSettings');
+      if (storedSettings) {
+        setLeagueSettings(JSON.parse(storedSettings));
+      }
+
+      const storedManagers = localStorage.getItem('managers');
+      if (storedManagers) {
+        setManagers(JSON.parse(storedManagers));
+      }
+
+      const storedTeams = await getAllItems(teamStoreName);
+      if (storedTeams !== null) {
+        setTeams(storedTeams);
+      }
+
+      const storedPlayers = await getAllItems(playerStoreName);
+      if (storedPlayers !== null) {
+        setPlayers(storedPlayers);
+      }
+    }
+
+    fetchSettingsAndManagers();
+  }, []);
+
+  useEffect(() => {
     if (leagueSettings) {
       localStorage.setItem('leagueSettings', JSON.stringify(leagueSettings));
     } else {
@@ -66,27 +69,56 @@ export const UserProvider = ({ children }) => {
     }
   }, [leagueSettings]);
 
+  const fetchTeamDataOnRefresh = useCallback(async () => {
+    const teamQuery = query(
+      collection(db, 'teams_v2')
+    );
+    let allTeamData = []
+    unsubscribeRef.current = onSnapshot(teamQuery, async (querySnapshot) => {
+  
+      querySnapshot.forEach((doc) => {
+        const teamData = doc.data();
+        const updated_teamData = {"id": teamData.team_details.id, "data": teamData}
+        allTeamData.push(updated_teamData)
+        setItem(teamStoreName, updated_teamData)
+      });
+      setTeams(allTeamData); 
+    });
+  }, []);
+
   useEffect(() => {
-    localStorage.setItem('managers', JSON.stringify(managers));
+    fetchTeamDataOnRefresh();
+  }, [fetchTeamDataOnRefresh]);
+  
+  const fetchPlayerDataOnRefresh = useCallback(async () => {
+    const playerQuery = query(
+      collection(db, 'active_players')
+    );
+    const allPlayers = []
+    unsubscribeRef.current = onSnapshot(playerQuery, async (querySnapshot) => {
+      
+      querySnapshot.forEach((doc) => {
+        const playerData = doc.data();
+        const updated_playerData = {"id": playerData.player_details.id, "data": playerData}
+        allPlayers.push(updated_playerData)
+        setItem(playerStoreName, updated_playerData)
+      });
+      setPlayers(allPlayers)
+    });
+  }, []);
+
+  useEffect(() => {
+    
+    fetchPlayerDataOnRefresh();
+  }, [fetchPlayerDataOnRefresh]);
+
+  useEffect(() => {
+    if (leagueSettings) {
+      localStorage.setItem('managers', JSON.stringify(managers));
+    } else {
+      localStorage.removeItem('managers');
+    }
   }, [managers]);
-
-  useEffect(() => {
-    if (teams) {
-      localStorage.setItem('teams', JSON.stringify(teams))
-    } else {
-      localStorage.removeItem('teams')
-    }
-    
-  }, [teams])
-
-  useEffect(() => {
-    if (players) {
-      localStorage.setItem('players', JSON.stringify(players))
-    } else {
-      localStorage.removeItem('players')
-    }
-    
-  }, [players])
 
   const value = {
     currentUser,

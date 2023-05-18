@@ -5,6 +5,8 @@ import { db } from '../firebase';
 import { useLocation } from 'react-router-dom';
 import { DataGrid } from '@mui/x-data-grid';
 import { Container, Typography, makeStyles } from '@material-ui/core';
+import { setItem, getItem, getAllItems } from '../indexedDB';
+
 
 import Navbar from '../Navbar/Navbar';
 import { Link } from 'react-router-dom';
@@ -36,6 +38,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
 }));
+
+const teamStoreName = 'teams';
+const playerStoreName = 'players';
+
 
 
 const UserHome = () => {
@@ -151,16 +157,18 @@ const UserHome = () => {
     const teamQuery = query(
       collection(db, 'teams_v2')
     );
-
+  
     let allTeamData = []
     unsubscribeRef.current = onSnapshot(teamQuery, async (querySnapshot) => {
-
+  
       querySnapshot.forEach((doc) => {
         const teamData = doc.data();
-        allTeamData.push(teamData)
+        const updated_teamData = {"id": teamData.team_details.id, "data": teamData}
+        allTeamData.push(updated_teamData)
+        setItem(teamStoreName, updated_teamData)
       });
+      setTeams(allTeamData); 
     });
-    setTeams(allTeamData)
   }
 
   const fetchPlayerData = async () => {
@@ -169,15 +177,15 @@ const UserHome = () => {
     );
     const allPlayers = []
     unsubscribeRef.current = onSnapshot(playerQuery, async (querySnapshot) => {
-
       
       querySnapshot.forEach((doc) => {
         const playerData = doc.data();
-        allPlayers.push(playerData)
+        const updated_playerData = {"id": playerData.player_details.id, "data": playerData}
+        allPlayers.push(updated_playerData)
+        setItem(playerStoreName, updated_playerData)
       });
+      setPlayers(allPlayers)
     });
-
-    setPlayers(allPlayers)
   }
   
   const fetchDocumentById = async (collectionName, documentId) => {

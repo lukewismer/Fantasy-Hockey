@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
 
 const Players = () => {
     const classes = useStyles();
-    const { currentUser, players, leagueSettings, teams } = useUser();
+    const { currentUser, leagueSettings, players, teams } = useUser();
     const [playerFantasyStats, setPlayerFantasyStats] = useState([]);
     const [playerStats, setPlayerStats] = useState([]);
 
@@ -46,100 +46,103 @@ const Players = () => {
     const [selectedTeam, setSelectedTeam] = useState("");
 
 
-    console.log(players)
-
     useEffect(() => {
-        const temp_playerStats = []
-        const temp_playerFantasyStats = []
+        console.log(players)
+        if (leagueSettings && players && players.length > 0 && teams && teams.length > 0){
+            const temp_playerStats = []
+            const temp_playerFantasyStats = []
 
-        for (const player of players) {
-        const lastStats = player.player_stats[player.player_stats.length - 1];
+            for (const player of players) {
+                const lastStats = player.data.player_stats[player.data.player_stats.length - 1];
 
-        if (lastStats)
-        {
+                if (lastStats)
+                {
+                    let playerTeam = "";
 
-            let playerTeam = "";
+                    for (let team of teams){
+                        if (team.data.team_details.id === player.data.player_details.teamID){
+                            playerTeam = team.data.team_details.abbreviation;
+                        }
+                    }
 
-            for (let team of teams){
-                if (team.team_details.id === player.player_details.teamID){
-                    playerTeam = team.team_details.abbreviation;
+                    if (player.data.player_details.positionCode == "G"){
+                        let fantasyPoints = 0;
+                        fantasyPoints += lastStats.wins * leagueSettings.scoring.win;
+                        fantasyPoints += lastStats.saves * leagueSettings.scoring.save;
+                        fantasyPoints += lastStats.shutouts * leagueSettings.scoring.shutout;
+                
+                        temp_playerStats.push({
+                            ...player,
+                            name: player.data.player_details.name,
+                            team: playerTeam,
+                            position: player.data.player_details.positionCode,
+                            games_played: lastStats.gamesPlayed,
+                            wins: lastStats.wins,
+                            saves: lastStats.saves,
+                            shutouts: lastStats.shutouts,
+                            fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
+                        });
+                        temp_playerFantasyStats.push({
+                        ...player,
+                        name: player.data.player_details.name,
+                        team: playerTeam,
+                        position: player.data.player_details.positionCode,
+                        games_played: lastStats.gamesPlayed,
+                        wins: lastStats.wins * leagueSettings.scoring.win,
+                        saves: lastStats.saves * leagueSettings.scoring.save,
+                        shutouts: lastStats.shutouts * leagueSettings.scoring.shutout,
+                        fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
+                        });
+                    } else {
+                        let fantasyPoints = 0;
+                        fantasyPoints += lastStats.goals * leagueSettings.scoring.goals;
+                        fantasyPoints += lastStats.assists * leagueSettings.scoring.assists;
+                        fantasyPoints += lastStats.shots * leagueSettings.scoring.shots;
+                        fantasyPoints += lastStats.plusMinus * leagueSettings.scoring.plusMinus;
+                        fantasyPoints += lastStats.hits * leagueSettings.scoring.hits;
+                        fantasyPoints += lastStats.blocks * leagueSettings.scoring.blocks
+                        fantasyPoints += lastStats.powerPlayPoints * leagueSettings.scoring.powerPlayPoints
+
+                        temp_playerStats.push({
+                            ...player,
+                            name: player.data.player_details.name,
+                            team: playerTeam,
+                            position: player.data.player_details.positionCode,
+                            games_played: lastStats.gamesPlayed,
+                            goals: lastStats.goals,
+                            assists: lastStats.assists,
+                            shots: lastStats.shots,
+                            plusMinus: lastStats.plusMinus,
+                            hits: lastStats.hits,
+                            blocks: lastStats.blocks,
+                            ppp: lastStats.powerPlayPoints,
+                            fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
+                        });
+                        temp_playerFantasyStats.push({
+                        ...player,
+                        name: player.data.player_details.name,
+                        team: playerTeam,
+                        position: player.data.player_details.positionCode,
+                        games_played: lastStats.gamesPlayed,
+                        goals: lastStats.goals * leagueSettings.scoring.goals,
+                        assists: lastStats.assists * leagueSettings.scoring.assists,
+                        shots: lastStats.shots * leagueSettings.scoring.shots,
+                        plusMinus: lastStats.plusMinus * leagueSettings.scoring.plusMinus,
+                        hits: lastStats.hits * leagueSettings.scoring.hits,
+                        blocks: lastStats.blocks * leagueSettings.scoring.blocks,
+                        ppp: lastStats.powerPlayPoints * leagueSettings.scoring.powerPlayPoints,
+                        fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
+                    })
                 }
             }
-            if (player.player_details.positionCode == "G"){
-                let fantasyPoints = 0;
-                fantasyPoints += lastStats.wins * leagueSettings.scoring.win;
-                fantasyPoints += lastStats.saves * leagueSettings.scoring.save;
-                fantasyPoints += lastStats.shutouts * leagueSettings.scoring.shutout;
-        
-                temp_playerStats.push({
-                    ...player,
-                    name: player.player_details.name,
-                    team: playerTeam,
-                    position: player.player_details.positionCode,
-                    games_played: lastStats.gamesPlayed,
-                    wins: lastStats.wins,
-                    saves: lastStats.saves,
-                    shutouts: lastStats.shutouts,
-                    fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
-                });
-                temp_playerFantasyStats.push({
-                ...player,
-                name: player.player_details.name,
-                team: playerTeam,
-                position: player.player_details.positionCode,
-                games_played: lastStats.gamesPlayed,
-                wins: lastStats.wins * leagueSettings.scoring.win,
-                saves: lastStats.saves * leagueSettings.scoring.save,
-                shutouts: lastStats.shutouts * leagueSettings.scoring.shutout,
-                fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
-                });
-                } else {
-                let fantasyPoints = 0;
-                fantasyPoints += lastStats.goals * leagueSettings.scoring.goals;
-                fantasyPoints += lastStats.assists * leagueSettings.scoring.assists;
-                fantasyPoints += lastStats.shots * leagueSettings.scoring.shots;
-                fantasyPoints += lastStats.plusMinus * leagueSettings.scoring.plusMinus;
-                fantasyPoints += lastStats.hits * leagueSettings.scoring.hits;
-                fantasyPoints += lastStats.blocks * leagueSettings.scoring.blocks
-                fantasyPoints += lastStats.powerPlayPoints * leagueSettings.scoring.powerPlayPoints
-
-                temp_playerStats.push({
-                    ...player,
-                    name: player.player_details.name,
-                    team: playerTeam,
-                    position: player.player_details.positionCode,
-                    games_played: lastStats.gamesPlayed,
-                    goals: lastStats.goals,
-                    assists: lastStats.assists,
-                    shots: lastStats.shots,
-                    plusMinus: lastStats.plusMinus,
-                    hits: lastStats.hits,
-                    blocks: lastStats.blocks,
-                    ppp: lastStats.powerPlayPoints,
-                    fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
-                });
-                temp_playerFantasyStats.push({
-                ...player,
-                name: player.player_details.name,
-                team: playerTeam,
-                position: player.player_details.positionCode,
-                games_played: lastStats.gamesPlayed,
-                goals: lastStats.goals * leagueSettings.scoring.goals,
-                assists: lastStats.assists * leagueSettings.scoring.assists,
-                shots: lastStats.shots * leagueSettings.scoring.shots,
-                plusMinus: lastStats.plusMinus * leagueSettings.scoring.plusMinus,
-                hits: lastStats.hits * leagueSettings.scoring.hits,
-                blocks: lastStats.blocks * leagueSettings.scoring.blocks,
-                ppp: lastStats.powerPlayPoints * leagueSettings.scoring.powerPlayPoints,
-                fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
-            })
-            }
-        }
             
         }
         setPlayerFantasyStats(temp_playerFantasyStats);
         setPlayerStats(temp_playerStats);
-      }, [players]);
+        }
+
+        
+      }, [players, teams, leagueSettings]);
 
     const handleStatsChange = (event) => {
         setIsFantasyStats(event.target.value);
@@ -150,8 +153,10 @@ const Players = () => {
     };
 
     const handleTeamChange = (event) => {
-        setSelectedTeam(event.target.value);
+        const value = event.target.value === "All Teams" ? "" : event.target.value;
+        setSelectedTeam(value);
     };
+      
 
     // Define columns for the DataGrid
     const columns = [
@@ -183,7 +188,7 @@ const Players = () => {
 
     return (
         <div className="players-page">
-          {currentUser ? (
+          {currentUser && playerStats ? (
             <>
               <h1>All Players</h1>
               <Navbar />
@@ -200,7 +205,7 @@ const Players = () => {
                   
                   <PositionFilter selectedPosition={selectedPosition} handlePositionChange={handlePositionChange} />
 
-                  <TeamFilter selectedTeam={selectedTeam} handleTeamChange={handleTeamChange} />
+                  <TeamFilter selectedTeam={selectedTeam} handleTeamChange={handleTeamChange} teams={teams}/>
 
                   <Grid container className={classes.root}>
                   {isFantasyStats ? (
@@ -217,10 +222,9 @@ const Players = () => {
                         headerClassName: classes.columnHeader,
                       }))}
                       pageSize={5}
-                      rowsPerPageOptions={[5]}
+                      rowsPerPageOptions={[5, 10, 25]}
                       className={classes.row}
                       getRowId={(row) => row.name}
-                      hideFooter
                     />
                   ) : (
                     <DataGrid
@@ -235,10 +239,9 @@ const Players = () => {
                         headerClassName: classes.columnHeader,
                       }))}
                       pageSize={5}
-                      rowsPerPageOptions={[5]}
+                      rowsPerPageOptions={[5, 10, 25]}
                       className={classes.row}
                       getRowId={(row) => row.name}
-                      hideFooter
                     />
                   )}
                 </Grid>

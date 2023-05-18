@@ -7,7 +7,8 @@ import Navbar from '../Navbar/Navbar';
 import Button from '@material-ui/core/Button'; // Import Button
 import { Grid } from '@material-ui/core'; // Import Grid
 
-import { PositionFilter, StatsFilter } from '../Players/TableFilters';
+
+import { PositionFilter, StatsFilter, TeamFilter } from '../Players/TableFilters';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -40,7 +41,7 @@ const Teams = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const teamId = searchParams.get("team_id");
-  const { currentUser, managers, leagueSettings, teams } = useUser();
+  const { currentUser, managers, setManagers, leagueSettings, teams } = useUser();
   const [currentManager, setCurrentManager] = useState(null);
 
   const [playerStats, setPlayerStats] = useState(null);
@@ -49,22 +50,62 @@ const Teams = () => {
   const [isFantasyStats, setIsFantasyStats] = useState(true);
   const [selectedPosition, setSelectedPosition] = useState(['L', 'R', 'C', 'D', "G"]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState("");
 
 
   useEffect(() => {
     const fetchData = async () => {
-      for (const manager of managers) {
+      let data;
+      
+      if (managers && managers.length > 0) {
+        data = managers;
+      } else {
+        const storedManagers = localStorage.getItem('managers');
+        if (storedManagers) {
+          data = JSON.parse(storedManagers);
+          setManagers(data);
+          console.log(teams)
+        }
+      }
+      
+      for (const manager of data) {
         if (manager["id"] === teamId) {
           setCurrentManager(manager);
         }
       }
-    };
-
+    }
     fetchData();
   }, [teamId, location.state]);
 
   useEffect(() => {
-    if (currentManager) {
+    const fetchData = async () => {
+      let data;
+      
+      if (managers && managers.length > 0) {
+        data = managers;
+      } else {
+        const storedManagers = localStorage.getItem('managers');
+        if (storedManagers) {
+          data = JSON.parse(storedManagers);
+          setManagers(data);
+          console.log(teams)
+        }
+      }
+      
+      for (const manager of data) {
+        if (manager["id"] === teamId) {
+          setCurrentManager(manager);
+        }
+      }
+    }
+    fetchData();
+  }, [teamId, location.state]);
+
+
+  useEffect(() => {
+    console.log('Before check:', teams);
+    if (currentManager && teams && teams.length > 0) {
+      console.log('After check:', teams)
       let temp_playerStats = [];
       let temp_playerFantasyStats = [];
 
@@ -74,8 +115,8 @@ const Teams = () => {
         let playerTeam = "";
 
         for (let team of teams){
-          if (team.team_details.id === player.player_details.teamID){
-            playerTeam = team.team_details.abbreviation;
+          if (team.data.team_details.id === player.player_details.teamID){
+            playerTeam = team.data.team_details.abbreviation;
           }
         }
 
@@ -85,7 +126,6 @@ const Teams = () => {
           fantasyPoints += lastStats.saves * leagueSettings.scoring.save;
           fantasyPoints += lastStats.shutouts * leagueSettings.scoring.shutout;
 
-          
   
           temp_playerStats.push({
               ...player,
@@ -153,7 +193,7 @@ const Teams = () => {
       setPlayerFantasyStats(temp_playerFantasyStats);
       setPlayerStats(temp_playerStats);
     }
-  }, [currentManager]);
+  }, [currentManager, teams]);
 
   const handleStatsChange = (event) => {
     setIsFantasyStats(event.target.value);
@@ -161,6 +201,11 @@ const Teams = () => {
 
   const handlePositionChange = (position) => {
       setSelectedPosition(position);
+  };
+
+  const handleTeamChange = (event) => {
+    const value = event.target.value === "All Teams" ? "" : event.target.value;
+    setSelectedTeam(value);
   };
 
   const classes = useStyles();
@@ -213,6 +258,8 @@ const Teams = () => {
                 
               <PositionFilter selectedPosition={selectedPosition} handlePositionChange={handlePositionChange} />
 
+              <TeamFilter selectedTeam={selectedTeam} handleTeamChange={handleTeamChange} teams={teams}/>
+              
               <Grid container className={classes.root}>
               {isFantasyStats ? (
                 <DataGrid

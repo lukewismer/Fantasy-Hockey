@@ -167,39 +167,42 @@ const teamFilterStyles = makeStyles((theme) => ({
 }));
 
 
-export const TeamFilter = ({ selectedTeam, handleTeamChange }) => {
-  const {teams} = useUser();
+export const TeamFilter = ({ selectedTeam, handleTeamChange, teams }) => {
   const classes = teamFilterStyles();
 
   const [activeTeams, setActiveTeams] = useState([]);
 
   useEffect(() => {
-    let temp_activeTeams = [];
-    for (let team of teams){
-      if (team.years["20222023"].Roster !== null){
-        temp_activeTeams.push(team)
+    if (teams && teams.length !== 0){
+      let temp_activeTeams = [];
+      for (let team of teams){
+        if (team.data.years["20222023"].Roster !== null){
+          temp_activeTeams.push(team)
+      }
+      setActiveTeams(temp_activeTeams)
       }
     }
-
-    setActiveTeams(temp_activeTeams)
   }, [teams])
   
 
   return (
     <FormControl className={classes.formControl}>
+    {activeTeams ? (
       <Select
         labelId="team-select-label"
         id="team-select"
-        value={selectedTeam}
+        value={selectedTeam || "All Teams"}
         onChange={handleTeamChange}
       >
-        <MenuItem className={classes.menuItem} value={""}>All Teams</MenuItem>
+        <MenuItem className={classes.menuItem} value={"All Teams"}>All Teams</MenuItem>
         {activeTeams.map((team) => (
-          <MenuItem className={classes.menuItem} key={team.team_details.id} value={team.team_details.abbreviation}>
-            {team.team_details.abbreviation}
+          <MenuItem className={classes.menuItem} key={team.data.team_details.id} value={team.data.team_details.abbreviation}>
+            {team.data.team_details.abbreviation}
           </MenuItem>
         ))}
       </Select>
+    ): <></>}
+      
     </FormControl>
   );
 };
