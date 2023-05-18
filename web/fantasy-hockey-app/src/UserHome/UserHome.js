@@ -7,6 +7,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Container, Typography, makeStyles } from '@material-ui/core';
 import { setItem, getItem, getAllItems } from '../indexedDB';
 
+import { StatsFilter } from '../Players/TableFilters';
+
 
 import Navbar from '../Navbar/Navbar';
 import { Link } from 'react-router-dom';
@@ -45,11 +47,14 @@ const playerStoreName = 'players';
 
 
 const UserHome = () => {
-  const { currentUser, managers, setManagers, setLeagueSettings, setPlayers, setTeams } = useUser();
+  const { currentUser, managers, setManagers, leagueSettings, setLeagueSettings, setPlayers, setTeams } = useUser();
   const [userData, setUserData] = useState(null);
   const location = useLocation();
   const unsubscribeRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [isFantasyStats, setIsFantasyStats] = useState(true);
+
   const classes = useStyles();
 
   useEffect(() => {
@@ -132,8 +137,28 @@ const UserHome = () => {
 
           new_managers.push(temp_data)
         }
-  
-        setManagers(new_managers);
+
+        let temp_Managers = []
+        for (let manager of new_managers){
+          let stats  = {"Normal": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0, "goalsAgainst": 0},
+          "Fantasy": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0, "goalsAgainst": 0}}
+
+          for (let player of manager.player_data){
+            const lastStats = player.player_stats[player.player_stats.length - 1];
+            
+            let entries = Object.entries(lastStats);
+            for (const [key, value] of entries){
+              if (key in stats["Normal"]){
+                stats["Normal"][key] += value;
+                stats["Fantasy"][key] += (value * leagueSettings.scoring[key]);
+              }
+            }
+          }
+          manager["stats"] = stats;
+          manager.details.score = Object.values(stats["Fantasy"]).reduce((a, b) => a + b, 0);
+          temp_Managers.push(manager);
+        }
+        setManagers(temp_Managers);
       });
     }
   }
@@ -202,23 +227,55 @@ const UserHome = () => {
       return null;
     }
   };
-  
-  const fetchManagerData = (manager) => {
-    let stats  = {"Normal": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0},
-     "Fantasy": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0}}
-    
-  }
 
-  const sortedRows = managers.map((manager, index) => ({
+  const sortedRowsNormal = managers.map((manager, index) => ({
     id: index,
     username: manager.details.username,
     score: manager.details.score,
+    goals: manager.stats.Normal.goals,
+    assists: manager.stats.Normal.assists,
+    shots: manager.stats.Normal.shots,
+    plusMinus: manager.stats.Normal.plusMinus,
+    powerPlayPoints: manager.stats.Normal.powerPlayPoints,
+    hits: manager.stats.Normal.hits,
+    blocks: manager.stats.Normal.blocks,
+    wins: manager.stats.Normal.wins,
+    saves: manager.stats.Normal.saves,
+    shutouts: manager.stats.Normal.shutouts,
+    goalsAgainst: manager.stats.Normal.goalsAgainst,
   }))
   .sort((a, b) => b.score - a.score)
   .map((row, index) => ({
     ...row,
     rowIndex: index + 1,
   }));
+
+  const sortedRowsFantasy = managers.map((manager, index) => ({
+    id: index,
+    username: manager.details.username,
+    score: manager.details.score,
+    goals: manager.stats.Fantasy.goals,
+    assists: manager.stats.Fantasy.assists,
+    shots: manager.stats.Fantasy.shots,
+    plusMinus: manager.stats.Fantasy.plusMinus,
+    powerPlayPoints: manager.stats.Fantasy.powerPlayPoints,
+    hits: manager.stats.Fantasy.hits,
+    blocks: manager.stats.Fantasy.blocks,
+    wins: manager.stats.Fantasy.wins,
+    saves: manager.stats.Fantasy.saves,
+    shutouts: manager.stats.Fantasy.shutouts,
+    goalsAgainst: manager.stats.Fantasy.goalsAgainst,
+  }))
+  .sort((a, b) => b.score - a.score)
+  .map((row, index) => ({
+    ...row,
+    rowIndex: index + 1,
+  }));
+
+  const handleStatsChange = (event) => {
+    setIsFantasyStats(event.target.value);
+  };
+
 
   const columns = [
     {
@@ -235,15 +292,18 @@ const UserHome = () => {
         );
       },
     },
-    { field: 'score', headerName: 'Score', width: 150, sortable: true },
-    { field: 'score', headerName: 'Goals', width: 150, sortable: true },
-    { field: 'score', headerName: 'Assists', width: 150, sortable: true },
-    { field: 'score', headerName: 'Shots', width: 150, sortable: true },
-    { field: 'score', headerName: 'Hits', width: 150, sortable: true },
-    { field: 'score', headerName: 'Blocks', width: 150, sortable: true },
-    { field: 'score', headerName: 'Wins', width: 150, sortable: true },
-    { field: 'score', headerName: 'Saves', width: 150, sortable: true },
-    { field: 'score', headerName: 'Shutouts', width: 150, sortable: true },
+    { field: 'score', headerName: 'Score', width: 100, sortable: true },
+    { field: 'goals', headerName: 'Goals', width: 85, sortable: true },
+    { field: 'assists', headerName: 'Assists', width: 85, sortable: true },
+    { field: 'shots', headerName: 'Shots', width: 85, sortable: true },
+    { field: 'plusMinus', headerName: '+/-', width: 85, sortable: true },
+    { field: 'powerPlayPoints', headerName: 'PPP', width: 85, sortable: true },
+    { field: 'hits', headerName: 'Hits', width: 85, sortable: true },
+    { field: 'blocks', headerName: 'Blocks', width: 85, sortable: true },
+    { field: 'wins', headerName: 'Wins', width: 85, sortable: true },
+    { field: 'saves', headerName: 'Saves', width: 85, sortable: true },
+    { field: 'shutouts', headerName: 'Shutouts', width: 85, sortable: true },
+    { field: 'goalsAgainst', headerName: 'GA', width: 85, sortable: true },
   ];
   
   return (
@@ -270,11 +330,13 @@ const UserHome = () => {
           </header>
           <Navbar />
           <main>
+          <StatsFilter isFantasyStats={isFantasyStats} handleStatsChange={handleStatsChange} />
             {managers && managers.length > 0 && (
-              <div style={{ height: '100%', width: '100%' }} className={classes.dataTable}>
+              isFantasyStats ? (
+                <div style={{ height: '100%', width: '100%' }} className={classes.dataTable}>
                 <DataGrid
                   classes={{row: classes.row}}
-                  rows={sortedRows}
+                  rows={sortedRowsFantasy}
                   columns={columns}
                   pageSize={5}
                   rowsPerPageOptions={[5]}
@@ -288,6 +350,25 @@ const UserHome = () => {
                   ]}
                 />
               </div>
+              ) : (
+                <div style={{ height: '100%', width: '100%' }} className={classes.dataTable}>
+                <DataGrid
+                  classes={{row: classes.row}}
+                  rows={sortedRowsNormal}
+                  columns={columns}
+                  pageSize={5}
+                  rowsPerPageOptions={[5]}
+                  disableSelectionOnClick
+                  hideFooter
+                  sortModel={[
+                    {
+                      field: 'score',
+                      sort: 'desc',
+                    },
+                  ]}
+                />
+              </div>
+              )
             )}
           </main>
           <footer className={classes.footer}>

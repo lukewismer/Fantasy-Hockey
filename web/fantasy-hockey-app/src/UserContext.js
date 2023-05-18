@@ -107,6 +107,11 @@ export const UserProvider = ({ children }) => {
     });
   }, []);
 
+  const updateManagers = async (newManagers) => {
+    setManagers(newManagers);
+    localStorage.setItem('managers', JSON.stringify(newManagers));
+  };
+
   useEffect(() => {
     
     fetchPlayerDataOnRefresh();
@@ -126,7 +131,7 @@ export const UserProvider = ({ children }) => {
     leagueSettings,
     setLeagueSettings,
     managers,
-    setManagers,
+    setManagers: updateManagers,
     teams, 
     setTeams,
     players,

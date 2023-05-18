@@ -67,9 +67,10 @@ const Players = () => {
 
                     if (player.data.player_details.positionCode == "G"){
                         let fantasyPoints = 0;
-                        fantasyPoints += lastStats.wins * leagueSettings.scoring.win;
-                        fantasyPoints += lastStats.saves * leagueSettings.scoring.save;
-                        fantasyPoints += lastStats.shutouts * leagueSettings.scoring.shutout;
+                        fantasyPoints += lastStats.wins * leagueSettings.scoring.wins;
+                        fantasyPoints += lastStats.saves * leagueSettings.scoring.saves;
+                        fantasyPoints += lastStats.shutouts * leagueSettings.scoring.shutouts;
+                        fantasyPoints += lastStats.goalsAgainst * leagueSettings.scoring.goalsAgainst;
                 
                         temp_playerStats.push({
                             ...player,
@@ -80,6 +81,7 @@ const Players = () => {
                             wins: lastStats.wins,
                             saves: lastStats.saves,
                             shutouts: lastStats.shutouts,
+                            goalsAgainst: lastStats.goalsAgainst,
                             fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
                         });
                         temp_playerFantasyStats.push({
@@ -88,9 +90,10 @@ const Players = () => {
                         team: playerTeam,
                         position: player.data.player_details.positionCode,
                         games_played: lastStats.gamesPlayed,
-                        wins: lastStats.wins * leagueSettings.scoring.win,
-                        saves: lastStats.saves * leagueSettings.scoring.save,
-                        shutouts: lastStats.shutouts * leagueSettings.scoring.shutout,
+                        wins: lastStats.wins * leagueSettings.scoring.wins,
+                        saves: lastStats.saves * leagueSettings.scoring.saves,
+                        shutouts: lastStats.shutouts * leagueSettings.scoring.shutouts,
+                        goalsAgainst: lastStats.goalsAgainst * leagueSettings.scoring.goalsAgainst,
                         fantasyPoints: parseFloat(fantasyPoints.toFixed(2))
                         });
                     } else {
@@ -184,6 +187,7 @@ const Players = () => {
         { field: 'wins', headerName: 'Wins', flex: 1 },
         { field: 'saves', headerName: 'Saves', flex: 1 },
         { field: 'shutouts', headerName: 'Shutouts', flex: 1 },
+        { field: 'goalsAgainst', headerName: 'GA', flex: 1 },
       ];
 
     return (
