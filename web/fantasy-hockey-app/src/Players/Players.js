@@ -3,7 +3,8 @@ import { useUser } from '../UserContext';
 import { DataGrid } from '@mui/x-data-grid';
 import { makeStyles } from '@material-ui/core/styles';
 import Navbar from '../Navbar/Navbar';
-import { PositionFilter, StatsFilter, TeamFilter} from './TableFilters';
+import { PositionFilter, StatsFilter, TeamFilter, ManagerFilter, PlayerFilter } from './TableFilters';
+import './Players.css';
 
 import { Grid } from '@material-ui/core'; // Import Grid
 
@@ -12,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: theme.spacing(2),
+      padding: '20px',
     },
     row: {
       '&:nth-of-type(odd)': {
@@ -22,6 +23,7 @@ const useStyles = makeStyles((theme) => ({
     columnHeader: {
       backgroundColor: '#3f51b5', // Dark blue for column headers
       color: '#ffffff', // White color for header text
+      fontSize: '1em',
     },
     boldCell: {
       fontWeight: 'bold',
@@ -31,23 +33,29 @@ const useStyles = makeStyles((theme) => ({
     positionColumn: {
       borderRight: '1px solid #ddd', // Light grey border on the right side
     },
+    cell: {
+      fontSize: '0.85em',  // Set this to your desired font size
+    },
   }));
 
-const Players = () => {
+const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
     const classes = useStyles();
-    const { currentUser, leagueSettings, players, teams } = useUser();
+    const { currentUser, leagueSettings, players, teams, managers } = useUser();
     const [playerFantasyStats, setPlayerFantasyStats] = useState([]);
     const [playerStats, setPlayerStats] = useState([]);
 
     const [isFantasyStats, setIsFantasyStats] = useState(true);
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedPosition, setSelectedPosition] = useState(['L', 'R', 'C', 'D', "G"]);
-    const [selectedTeam, setSelectedTeam] = useState("");
+    const [selectedPosition, setSelectedPosition] = useState(positionFilter ? positionFilter : ['L', 'R', 'C', 'D', "G"]);
+    const [selectedTeam, setSelectedTeam] = useState(teamFilter ? teamFilter : "");
+    const [selectedManager, setSelectedManager] = useState(managerFilter ? managerFilter : "");
+    const [selectedPlayer, setSelectedPlayer] = useState(playerFilter ? playerFilter : "");
+
+    const [freeAgents, setFreeAgents] = useState([]);
 
 
     useEffect(() => {
-        console.log(players)
         if (leagueSettings && players && players.length > 0 && teams && teams.length > 0){
             const temp_playerStats = []
             const temp_playerFantasyStats = []
@@ -74,6 +82,7 @@ const Players = () => {
                 
                         temp_playerStats.push({
                             ...player,
+                            playerId: player.data.player_details.id,
                             name: player.data.player_details.name,
                             team: playerTeam,
                             position: player.data.player_details.positionCode,
@@ -86,6 +95,7 @@ const Players = () => {
                         });
                         temp_playerFantasyStats.push({
                         ...player,
+                        playerId: player.data.player_details.id,
                         name: player.data.player_details.name,
                         team: playerTeam,
                         position: player.data.player_details.positionCode,
@@ -108,6 +118,7 @@ const Players = () => {
 
                         temp_playerStats.push({
                             ...player,
+                            playerId: player.data.player_details.id,
                             name: player.data.player_details.name,
                             team: playerTeam,
                             position: player.data.player_details.positionCode,
@@ -123,6 +134,7 @@ const Players = () => {
                         });
                         temp_playerFantasyStats.push({
                         ...player,
+                        playerId: player.data.player_details.id,
                         name: player.data.player_details.name,
                         team: playerTeam,
                         position: player.data.player_details.positionCode,
@@ -159,44 +171,84 @@ const Players = () => {
         const value = event.target.value === "All Teams" ? "" : event.target.value;
         setSelectedTeam(value);
     };
+
+    const handleManagerChange = (event) => {
+      const value = event.target.value === "All Managers" ? "" : event.target.value;
+      let managerData = ""
+      for (let manager of managers){
+        if (manager.details.username === value){
+          managerData = manager;
+        }
+      }
+      setSelectedManager(managerData);
+    };
+
+    const handlePlayersChange = (event) => {
+      const value = event.target.value === "All Players" ? "" : event.target.value;
+      setSelectedPlayer(value);
+    };
       
+    const renderCell = (params) => (
+      <div className={classes.cell}>
+          {params.value}
+      </div>
+    );
+
+    useEffect(() => {
+      let tempFreeAgents = [];
+      for (let manager of managers){
+        for (let player of manager.details.players){
+          tempFreeAgents.push(player);
+        }
+      }
+      setFreeAgents(tempFreeAgents);
+    }, [managers])
 
     // Define columns for the DataGrid
     const columns = [
         { 
           field: 'name', 
           headerName: 'Name', 
-          flex: 1.5, 
-          cellClassName: classes.boldCell
+          width: 85, 
+          cellClassName: classes.boldCell,
+          renderCell: (params) => (
+            <div className={classes.cell}>
+              {params.value.split(" ")[0]}<br/>
+              {params.value.split(" ")[1]}
+            </div>
+          ),
         },
         { 
           field: 'position', 
-          headerName: 'Position', 
-          flex: 1, 
+          headerName: 'POS', 
+          width: 0, 
+          renderCell: renderCell
         },
-        { field: 'team', headerName: 'Team', flex: 1 },
-        { field: 'fantasyPoints', headerName: 'Points', flex: 1 },
-        { field: 'games_played', headerName: 'GP', flex: 1 },
-        { field: 'goals', headerName: 'G', flex: 1 },
-        { field: 'assists', headerName: 'A', flex: 1 },
-        { field: 'shots', headerName: 'S', flex: 1 },
-        { field: 'plusMinus', headerName: '+/-', flex: 1 },
-        { field: 'ppp', headerName: 'PPP', flex: 1 },
-        { field: 'hits', headerName: 'H', flex: 1 },
-        { field: 'blocks', headerName: 'B', flex: 1 },
-        { field: 'wins', headerName: 'Wins', flex: 1 },
-        { field: 'saves', headerName: 'Saves', flex: 1 },
-        { field: 'shutouts', headerName: 'Shutouts', flex: 1 },
-        { field: 'goalsAgainst', headerName: 'GA', flex: 1 },
+        { field: 'team', headerName: 'Team', width: 30, renderCell: renderCell, },
+        { field: 'fantasyPoints', headerName: 'Points', width: 55, renderCell: (params) => (
+          <div className={classes.cell}>
+            <strong>{params.value}</strong>
+          </div>
+        ), },
+        { field: 'games_played', headerName: 'GP', width: 0, renderCell: renderCell, },
+        { field: 'goals', headerName: 'G', width: 0, renderCell: renderCell, },
+        { field: 'assists', headerName: 'A', width: 0, renderCell: renderCell, },
+        { field: 'shots', headerName: 'S', width: 0, renderCell: renderCell, },
+        { field: 'plusMinus', headerName: '+/-', width: 0, renderCell: renderCell, },
+        { field: 'ppp', headerName: 'PPP', width: 0, renderCell: renderCell, },
+        { field: 'hits', headerName: 'H', width: 0, renderCell: renderCell, },
+        { field: 'blocks', headerName: 'B', width: 0, renderCell: renderCell, },
+        { field: 'wins', headerName: 'W', width: 0, renderCell: renderCell, },
+        { field: 'saves', headerName: 'SA', width: 0, renderCell: renderCell, },
+        { field: 'shutouts', headerName: 'SO', width: 0, renderCell: renderCell, },
+        { field: 'goalsAgainst', headerName: 'GA', width: 0, renderCell: renderCell, },
       ];
 
+      console.log(selectedPlayer)
     return (
         <div className="players-page">
           {currentUser && playerStats ? (
             <>
-              <h1>All Players</h1>
-              <Navbar />
-      
               {playerStats ? (
                 <>
                 <input
@@ -211,42 +263,54 @@ const Players = () => {
 
                   <TeamFilter selectedTeam={selectedTeam} handleTeamChange={handleTeamChange} teams={teams}/>
 
+                  <ManagerFilter selectedManager={selectedManager} handleManagerChange={handleManagerChange} managers={managers} />
+
+                  <PlayerFilter selectedPlayers={selectedPlayer} handlePlayersChange={handlePlayersChange} />
+                  
+                  
                   <Grid container className={classes.root}>
                   {isFantasyStats ? (
-
-                    <DataGrid
-                      autoWidth
-                      rows={playerFantasyStats.filter((row) =>
-                            row.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                            selectedPosition.includes(row.position) &&
-                            (selectedTeam === "" || row.team === selectedTeam)
-                        )}
-                      columns={columns.map((column) => ({
-                        ...column,
-                        headerClassName: classes.columnHeader,
-                      }))}
-                      pageSize={5}
-                      rowsPerPageOptions={[5, 10, 25]}
-                      className={classes.row}
-                      getRowId={(row) => row.name}
-                    />
+                    <div>
+                      <DataGrid
+                        rows={playerFantasyStats.filter((row) =>
+                              row.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                              selectedPosition.includes(row.position) &&
+                              (selectedTeam === "" || row.team === selectedTeam) &&
+                              (selectedManager === "" || selectedManager.details.players.includes(row.id.toString())) &&
+                              (selectedPlayer === "" || selectedPlayer === "All Players" || (selectedPlayer === "Free Agents" && !freeAgents.includes(row.id.toString())) ||
+                              (selectedPlayer === "All Taken" && freeAgents.includes(row.id.toString())))
+                          )}
+                        columns={columns.map((column) => ({
+                          ...column,
+                          headerClassName: classes.columnHeader,
+                        }))}
+                        pageSize={5}
+                        rowsPerPageOptions={[5, 10, 25]}
+                        className={classes.row}
+                        getRowId={(row) => row.name}
+                      />
+                    </div>
                   ) : (
-                    <DataGrid
-                      autoWidth
-                      rows={playerStats.filter((row) =>
-                            row.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                            selectedPosition.includes(row.position) &&
-                            (selectedTeam === "" || row.team === selectedTeam)
-                        )}
-                      columns={columns.map((column) => ({
-                        ...column,
-                        headerClassName: classes.columnHeader,
-                      }))}
-                      pageSize={5}
-                      rowsPerPageOptions={[5, 10, 25]}
-                      className={classes.row}
-                      getRowId={(row) => row.name}
-                    />
+                    <div>
+                      <DataGrid
+                        rows={playerStats.filter((row) =>
+                              row.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                              selectedPosition.includes(row.position) &&
+                              (selectedTeam === "" || row.team === selectedTeam) &&
+                              (selectedManager === "" || selectedManager.details.players.includes(row.id.toString())) &&
+                              (selectedPlayer === "" || selectedPlayer === "All Players" || (selectedPlayer === "Free Agents" && !freeAgents.includes(row.id.toString())) ||
+                              (selectedPlayer === "All Taken" && freeAgents.includes(row.id.toString())))
+                          )}
+                        columns={columns.map((column) => ({
+                          ...column,
+                          headerClassName: classes.columnHeader,
+                        }))}
+                        pageSize={5}
+                        rowsPerPageOptions={[5, 10, 25]}
+                        className={classes.row}
+                        getRowId={(row) => row.name}
+                      />
+                    </div>
                   )}
                 </Grid>
                   </>

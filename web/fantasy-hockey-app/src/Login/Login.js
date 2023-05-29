@@ -40,12 +40,15 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="container">
+    <div className="login-container">
+      <div className="image-side" />
       <div className="login-page">
-        <h1>Fantasy Hockey Login</h1>
+        <h1 className="company-name">• FantasyHockeyRealm</h1>
+        <h2>Welcome back</h2>
+        <p>Welcome back! Please Enter your details</p>
         <form onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="email">Email:</label>
+          <div className="input-group">
+            <label htmlFor="email">Email</label>
             <input
               type="text"
               id="email"
@@ -53,10 +56,11 @@ const LoginPage = () => {
               value={email}
               ref={emailref}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
             />
           </div>
-          <div>
-            <label htmlFor="password">Password:</label>
+          <div className="input-group">
+            <label htmlFor="password">Password</label>
             <input
               type="password"
               id="password"
@@ -64,14 +68,23 @@ const LoginPage = () => {
               value={password}
               ref={passwordRef}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
             />
+          </div>
+          <div className="additional-options">
+            <div>
+              <input type="checkbox" id="rememberMe" name="rememberMe" />
+              <label htmlFor="rememberMe">Remember Me</label>
+            </div>
+            <div>
+              <a href="/forgot-password">Forgot Password</a>
+            </div>
           </div>
           {errorMessage && <p className="error-message">{errorMessage}</p>}
           <button type="submit">Login</button>
-          <p>Or</p>
-          <h6>
-            <a href="/signup">Sign Up</a>
-          </h6>
+          <p>
+            Don't have an account? <a href="/signup">Sign Up</a>
+          </p>
         </form>
       </div>
     </div>

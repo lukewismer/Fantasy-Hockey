@@ -4,42 +4,23 @@ import { getDocs, getDoc, doc, query, where, collection, onSnapshot } from 'fire
 import { db } from '../firebase';
 import { useLocation } from 'react-router-dom';
 import { DataGrid } from '@mui/x-data-grid';
-import { Container, Typography, makeStyles } from '@material-ui/core';
 import { setItem, getItem, getAllItems } from '../indexedDB';
+import Card from './Card'
+import Players from '../Players/Players';
 
 import { StatsFilter } from '../Players/TableFilters';
 
-
-import Navbar from '../Navbar/Navbar';
 import { Link } from 'react-router-dom';
+import './UserHome.css';
+import LineupV2 from '../Lineup/LineupV2';
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-  },
-  header: {
-    marginBottom: theme.spacing(2),
-    textAlign: 'center'
-  },
-  title: {
-    marginTop: theme.spacing(2),
-  },
-  dataTable: {
-    marginTop: theme.spacing(2),
-    marginBottom: theme.spacing(2),
-  },
-  footer: {
-    marginTop: theme.spacing(4),
-    textAlign: 'center',
-    padding: theme.spacing(2),
-    backgroundColor: '#f8f9fa',
-  },
-  row: {
-    '&:nth-of-type(odd)': {
-      backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    },
-  },
-}));
+import logo from './fantasyhockeyrealm-logo.png';
+
+import { BsFillHouseFill, BsPeopleFill } from "react-icons/bs";
+import { RiTeamFill } from "react-icons/ri";
+import { FaPeopleArrows, FaSearch } from "react-icons/fa";
+
+
 
 const teamStoreName = 'teams';
 const playerStoreName = 'players';
@@ -53,9 +34,14 @@ const UserHome = () => {
   const unsubscribeRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [ menuItem, setMenuItem ] = useState("home");
+
+  const [ playerTeamFilter, setPlayerTeamFilter ] = useState("");
+
   const [isFantasyStats, setIsFantasyStats] = useState(true);
 
-  const classes = useStyles();
+  const playerMenuItemRef = useRef(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -276,6 +262,22 @@ const UserHome = () => {
     setIsFantasyStats(event.target.value);
   };
 
+  const handleClickOnManager = (event) => {
+    setMenuItem("players");
+    for (let manager of managers){
+      if (manager.details.username === event.value){
+
+        setPlayerTeamFilter(manager.details);
+      }
+    }
+
+    menuItems.forEach(i => i.classList.remove('selected'));
+    menuItems.forEach(i => i.classList.add('unselected'));
+
+    playerMenuItemRef.current.classList.remove('unselected');
+    playerMenuItemRef.current.classList.add('selected');
+
+  }
 
   const columns = [
     {
@@ -283,14 +285,14 @@ const UserHome = () => {
       headerName: 'Username',
       width: 150,
       sortable: true,
-      renderCell: (params) => {
-        const manager = managers[params.row.id];
-        return (
-          <Link to={`/teams?team_id=${manager.id}`}>
-            {params.row.username}
-          </Link>
-        );
-      },
+      renderCell: (params) => (
+        <div
+          onClick={() => handleClickOnManager(params)}
+          style={{ cursor: 'pointer' }}
+        >
+          {params.value}
+        </div>
+      ),
     },
     { field: 'score', headerName: 'Score', width: 100, sortable: true},
     { field: 'goals', headerName: 'Goals', width: 85, sortable: true },
@@ -305,69 +307,118 @@ const UserHome = () => {
     { field: 'shutouts', headerName: 'Shutouts', width: 85, sortable: true },
     { field: 'goalsAgainst', headerName: 'GA', width: 85, sortable: true },
   ];
-  
+
+  let menuItems = document.querySelectorAll('.menu-item');
+
+  // Add event listener to each menu item
+  menuItems.forEach(item => {
+      item.addEventListener('click', function() {
+          // Remove the 'selected' class from all menu items
+          menuItems.forEach(i => i.classList.remove('selected'));
+          menuItems.forEach(i => i.classList.add('unselected'));
+
+          // Add the 'selected' class to the clicked item
+          this.classList.remove('unselected');
+          this.classList.add('selected');
+      });
+  });
+
+  const handleMenuItemClick = (item) => {
+    setMenuItem(item);
+  };
   
   return (
-    <Container className={classes.root}>
+    <div className="root">
       {isLoading ? (
         <div>Loading...</div>
       ) : (
         <>
-          <header className={classes.header}>
-            {userData ? (
-              <>
-                <Typography variant="h4" component="h1">
-                  Welcome back, {userData.username}
-                </Typography>
-                <Typography variant="h6" component="h2">
-                  Points: {userData.score}
-                </Typography>
-              </>
-            ) : (
-              <Typography variant="h4" component="h1">
-                Loading
-              </Typography>
-            )}
-          </header>
-          <Navbar />
-          <main>
-          <StatsFilter isFantasyStats={isFantasyStats} handleStatsChange={handleStatsChange} />
-            {managers && managers.length > 0 && (
-              isFantasyStats ? (
-                <div style={{ height: '100%', width: '100%' }} className={classes.dataTable}>
-                <DataGrid
-                  classes={{row: classes.row}}
-                  rows={sortedRowsFantasy}
-                  columns={columns}
-                  pageSize={5}
-                  rowsPerPageOptions={[5]}
-                  disableSelectionOnClick
-                  hideFooter
-                />
+          <div className="sidebar">
+            <div className='logo-container'><img src={logo} className='logo-img'></img></div>
+            <div class="menu-label">Pages</div>
+            <div onClick={() => handleMenuItemClick("home")} class="menu-item selected">
+              <div className="item-content">
+                  <BsFillHouseFill />
+                  <span>Home</span>
               </div>
+            </div>
+            <div onClick={() => handleMenuItemClick("lineup")} class="menu-item unselected">
+              <div className="item-content">
+                  <FaPeopleArrows />
+                  <span>Lineup</span>
+              </div>
+            </div>
+            <div onClick={() => handleMenuItemClick("players")} class="menu-item unselected" ref={playerMenuItemRef}>
+              <div className="item-content">
+                  <BsPeopleFill />
+                  <span>Players</span>
+              </div>
+            </div>
+          </div>
+          <div className="main">
+            {menuItem === "home" ? ( 
+            <main>
+              {userData ? (
+                <>
+                  <h1>Welcome back, {userData.username}</h1>
+                  <h2>Points: {userData.score}</h2>
+                </>
               ) : (
-                <div style={{ height: '100%', width: '100%' }} className={classes.dataTable}>
-                <DataGrid
-                  classes={{row: classes.row}}
-                  rows={sortedRowsNormal}
-                  columns={columns}
-                  pageSize={5}
-                  rowsPerPageOptions={[5]}
-                  disableSelectionOnClick
-                  hideFooter
-                />
+                <h1>Loading</h1>
+              )}
+              <StatsFilter isFantasyStats={isFantasyStats} handleStatsChange={handleStatsChange} />
+              {managers && managers.length > 0 && (
+                isFantasyStats ? (
+                  <div className="data-table">
+                    <DataGrid
+                      classes={{row: "row"}}
+                      rows={sortedRowsFantasy}
+                      columns={columns}
+                      pageSize={5}
+                      rowsPerPageOptions={[5]}
+                      disableSelectionOnClick
+                      hideFooter
+                    />
+                  </div>
+                ) : (
+                  <div className="data-table">
+                    <DataGrid
+                      classes={{row: "row"}}
+                      rows={sortedRowsNormal}
+                      columns={columns}
+                      pageSize={5}
+                      rowsPerPageOptions={[5]}
+                      disableSelectionOnClick
+                      hideFooter
+                    />
+                  </div>
+                )
+              )}
+            </main>) : menuItem === "lineup" ? (
+              <>
+                <h1>Your Lineup</h1>
+                <LineupV2 />
+              </>
+            ) : menuItem === "players" ? (
+              <div className='table-wrapper'>
+                <h1>Players</h1>
+                <Players managerFilter={playerTeamFilter}/>
               </div>
-              )
-            )}
-          </main>
-          <footer className={classes.footer}>
-            <Typography variant="body2" color="textSecondary" component="p">
-              &copy; 2023 FantasyHockeyRealm. All rights reserved.
-            </Typography>
-          </footer>
+            ) : null
+            }
+          </div>
+          <div className="cards">
+            <div className="search-bar">
+              <FaSearch className='search-icon'/>
+              <input type="text" placeholder="Search..." />
+            </div>
+
+            <Card title="Card 1" caption="Lorem ipsum dolor sit amet, consectetur adipiscing elit." />
+            <Card title="Card 2" caption="Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+          </div>
         </>
       )}
-    </Container>
+    </div>
   );
 };  
 

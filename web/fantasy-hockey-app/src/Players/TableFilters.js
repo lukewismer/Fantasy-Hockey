@@ -133,9 +133,6 @@ export const StatsFilter = ({ isFantasyStats, handleStatsChange }) => {
   );
 };
 
-
-
-
 const teamFilterStyles = makeStyles((theme) => ({
   formControl: {
     margin: theme.spacing(1),
@@ -206,3 +203,122 @@ export const TeamFilter = ({ selectedTeam, handleTeamChange, teams }) => {
     </FormControl>
   );
 };
+
+const managerFilterStyles = makeStyles((theme) => ({
+  formControl: {
+    margin: theme.spacing(1),
+    minWidth: 120,
+    backgroundColor: '#ffffff',
+    borderRadius: theme.shape.borderRadius,
+    border: '1px solid #000000',
+    '&:hover': {
+      backgroundColor: '#ffffff',
+    },
+    '& .MuiSelect-icon': {
+      color: '#000000',
+    },
+    '& .MuiSelect-select': {
+      color: '#000000',
+      paddingRight: theme.spacing(4),
+    },
+    '& .MuiInputLabel-root': {
+      color: '#000000',
+      fontSize: '1.2em',
+      textAlign: 'center',
+    },
+  },
+  menuItem: {
+    '&:hover': {
+      backgroundColor: '#f2f2f2',
+    },
+  },
+}))
+
+export const ManagerFilter = ({ selectedManager, handleManagerChange, managers}) => {
+  const classes = managerFilterStyles();
+
+  const [activeManagers, setActiveManagers] = useState([]);
+
+
+  useEffect(() => {
+    if (managers && managers.length !== 0){
+      let temp_activeManagers = [];
+      for (let manager of managers){
+        temp_activeManagers.push(manager)
+      }
+      setActiveManagers(temp_activeManagers)
+    }
+  }, [managers])
+  
+  return (
+    <FormControl className={classes.formControl}>
+    {activeManagers && (selectedManager || selectedManager === "") ? (
+      <Select
+        labelId="manager-select-label"
+        id="manager-select"
+        value={(selectedManager && selectedManager !== "") ? selectedManager.details.username : "All Managers"}
+        onChange={handleManagerChange}
+      >
+        <MenuItem className={classes.menuItem} value={"All Managers"}>All Managers</MenuItem>
+        {activeManagers.map((manager) => (
+          <MenuItem className={classes.menuItem} key={manager.id} value={manager.details.username}>
+            {manager.details.username}
+          </MenuItem>
+        ))}
+      </Select>
+    ): <></>}
+      
+    </FormControl>
+  );
+}
+
+const playerFilterStyles = makeStyles((theme) => ({
+  formControl: {
+    margin: theme.spacing(1),
+    minWidth: 120,
+    backgroundColor: '#ffffff',
+    borderRadius: theme.shape.borderRadius,
+    border: '1px solid #000000',
+    '&:hover': {
+      backgroundColor: '#ffffff',
+    },
+    '& .MuiSelect-icon': {
+      color: '#000000',
+    },
+    '& .MuiSelect-select': {
+      color: '#000000',
+      paddingRight: theme.spacing(4),
+    },
+    '& .MuiInputLabel-root': {
+      color: '#000000',
+      fontSize: '1.2em',
+      textAlign: 'center',
+    },
+  },
+  menuItem: {
+    '&:hover': {
+      backgroundColor: '#f2f2f2',
+    },
+  },
+}))
+
+export const PlayerFilter = ({ selectedPlayers, handlePlayersChange }) => {
+  const classes = playerFilterStyles();
+
+  console.log(selectedPlayers);
+  
+  return (
+    <FormControl className={classes.formControl}>
+      <Select
+        labelId="player-select-label"
+        id="player-select"
+        value={selectedPlayers || "All Players"}
+        onChange={handlePlayersChange}
+      >
+        <MenuItem className={classes.menuItem} value={"All Players"}>All Players</MenuItem>
+        <MenuItem className={classes.menuItem} value={"Free Agents"}>Free Agents</MenuItem>
+        <MenuItem className={classes.menuItem} value={"All Taken"}>All Taken</MenuItem>
+      </Select>
+    </FormControl>
+  );
+}
