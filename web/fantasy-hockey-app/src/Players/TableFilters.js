@@ -249,6 +249,7 @@ export const ManagerFilter = ({ selectedManager, handleManagerChange, managers})
       setActiveManagers(temp_activeManagers)
     }
   }, [managers])
+
   
   return (
     <FormControl className={classes.formControl}>
@@ -256,7 +257,7 @@ export const ManagerFilter = ({ selectedManager, handleManagerChange, managers})
       <Select
         labelId="manager-select-label"
         id="manager-select"
-        value={(selectedManager && selectedManager !== "") ? selectedManager.details.username : "All Managers"}
+        value={(selectedManager && selectedManager !== "") ? selectedManager.username : "All Managers"}
         onChange={handleManagerChange}
       >
         <MenuItem className={classes.menuItem} value={"All Managers"}>All Managers</MenuItem>
@@ -304,8 +305,6 @@ const playerFilterStyles = makeStyles((theme) => ({
 
 export const PlayerFilter = ({ selectedPlayers, handlePlayersChange }) => {
   const classes = playerFilterStyles();
-
-  console.log(selectedPlayers);
   
   return (
     <FormControl className={classes.formControl}>

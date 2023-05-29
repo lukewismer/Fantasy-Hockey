@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from '../UserContext';
 import { DataGrid } from '@mui/x-data-grid';
 import { makeStyles } from '@material-ui/core/styles';
-import Navbar from '../Navbar/Navbar';
 import { PositionFilter, StatsFilter, TeamFilter, ManagerFilter, PlayerFilter } from './TableFilters';
 import './Players.css';
 
@@ -244,7 +243,6 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
         { field: 'goalsAgainst', headerName: 'GA', width: 0, renderCell: renderCell, },
       ];
 
-      console.log(selectedPlayer)
     return (
         <div className="players-page">
           {currentUser && playerStats ? (
@@ -276,7 +274,7 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
                               row.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
                               selectedPosition.includes(row.position) &&
                               (selectedTeam === "" || row.team === selectedTeam) &&
-                              (selectedManager === "" || selectedManager.details.players.includes(row.id.toString())) &&
+                              (selectedManager === "" || selectedManager.players.includes(row.id.toString())) &&
                               (selectedPlayer === "" || selectedPlayer === "All Players" || (selectedPlayer === "Free Agents" && !freeAgents.includes(row.id.toString())) ||
                               (selectedPlayer === "All Taken" && freeAgents.includes(row.id.toString())))
                           )}

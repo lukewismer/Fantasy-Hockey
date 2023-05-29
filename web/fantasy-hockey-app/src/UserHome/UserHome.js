@@ -17,15 +17,12 @@ import LineupV2 from '../Lineup/LineupV2';
 import logo from './fantasyhockeyrealm-logo.png';
 
 import { BsFillHouseFill, BsPeopleFill } from "react-icons/bs";
-import { RiTeamFill } from "react-icons/ri";
 import { FaPeopleArrows, FaSearch } from "react-icons/fa";
 
 
 
 const teamStoreName = 'teams';
 const playerStoreName = 'players';
-
-
 
 const UserHome = () => {
   const { currentUser, managers, setManagers, leagueSettings, setLeagueSettings, setPlayers, setTeams } = useUser();
