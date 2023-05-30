@@ -4,13 +4,12 @@ import { getDocs, getDoc, doc, query, where, collection, onSnapshot } from 'fire
 import { db } from '../firebase';
 import { useLocation } from 'react-router-dom';
 import { DataGrid } from '@mui/x-data-grid';
-import { setItem, getItem, getAllItems } from '../indexedDB';
+import { setItem } from '../indexedDB';
 import Card from './Card'
 import Players from '../Players/Players';
 
 import { StatsFilter } from '../Players/TableFilters';
 
-import { Link } from 'react-router-dom';
 import './UserHome.css';
 import LineupV2 from '../Lineup/LineupV2';
 
@@ -19,14 +18,11 @@ import logo from './fantasyhockeyrealm-logo.png';
 import { BsFillHouseFill, BsPeopleFill } from "react-icons/bs";
 import { FaPeopleArrows, FaSearch } from "react-icons/fa";
 
-
-
 const teamStoreName = 'teams';
 const playerStoreName = 'players';
 
 const UserHome = () => {
   const { currentUser, managers, setManagers, leagueSettings, setLeagueSettings, setPlayers, setTeams } = useUser();
-  const [userData, setUserData] = useState(null);
   const location = useLocation();
   const unsubscribeRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,15 +38,15 @@ const UserHome = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (location.state && location.state.userData) {
-        setUserData(location.state.userData);
-      } else {
-        await fetchUserData();
-      }
+      console.log("fetched user data");
       await fetchManagers();
+      console.log("fetched managers");
       await fetchLeagueSettings();
+      console.log("fetched league settings");
       await fetchTeamData();
+      console.log("fetched team data");
       await fetchPlayerData();
+      console.log("fetched player data");
       setIsLoading(false);
     };
   
@@ -66,28 +62,11 @@ const UserHome = () => {
   }, [currentUser, location.state]);
   
 
-  const fetchUserData = async () => {
-    if (currentUser) {
-      const userQuery = query(
-        collection(db, 'users'),
-        where('username', '==', currentUser.username)
-      );
-
-      unsubscribeRef.current = onSnapshot(userQuery, (querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-          setUserData(doc.data());
-        });
-      });
-    } else {
-        console.log("no user")
-    }
-  };
-
   const fetchManagers = async () => {
     if (currentUser) {
       const managerQuery = query(
         collection(db, 'leagues'),
-        where('managers', 'array-contains', currentUser.uid)
+        where('managers', 'array-contains', currentUser.id)
       );
   
       // Listen for changes in the matching documents
@@ -99,49 +78,11 @@ const UserHome = () => {
           leagueData.managers.forEach(manager_id => temp_managers.push(manager_id));
         });
   
-        let new_managers = [];
-  
         // Fetch manager_data for all managers in parallel
         const manager_data_promises = temp_managers.map(manager_id => fetchDocumentById("users", manager_id));
         const manager_data_list = await Promise.all(manager_data_promises);
   
-        for (const [index, manager_data] of manager_data_list.entries()) {
-          const manager_id = temp_managers[index];
-          let temp_data = { "id": manager_id, "details": manager_data, "player_data": [] }
-  
-          // Fetch player data for all players in parallel
-          const player_ids = manager_data.players;
-          const player_data_promises = player_ids.map(player_id => fetchDocumentById("active_players", player_id));
-          const player_data_list = await Promise.all(player_data_promises);
-  
-          for (const playerdata of player_data_list) {
-            temp_data["player_data"].push(playerdata );
-          }
-
-          new_managers.push(temp_data)
-        }
-
-        let temp_Managers = []
-        for (let manager of new_managers){
-          let stats  = {"Normal": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0, "goalsAgainst": 0},
-          "Fantasy": {"goals": 0, "assists": 0, "shots": 0, "blocks": 0, "hits" :0, "plusMinus": 0, "powerPlayPoints": 0, "wins": 0, "saves": 0, "shutouts":0, "goalsAgainst": 0}}
-
-          for (let player of manager.player_data){
-            const lastStats = player.player_stats[player.player_stats.length - 1];
-            
-            let entries = Object.entries(lastStats);
-            for (const [key, value] of entries){
-              if (key in stats["Normal"]){
-                stats["Normal"][key] += value;
-                stats["Fantasy"][key] += (value * leagueSettings.scoring[key]);
-              }
-            }
-          }
-          manager["stats"] = stats;
-          manager.details.score = Object.values(stats["Fantasy"]).reduce((a, b) => a + b, 0);
-          temp_Managers.push(manager);
-        }
-        setManagers(temp_Managers);
+        setManagers(manager_data_list);
       });
     }
   }
@@ -149,7 +90,7 @@ const UserHome = () => {
   const fetchLeagueSettings = async () => {
     const leagueQuery = query(
       collection(db, 'leagues'),
-      where('managers', 'array-contains', currentUser.uid)
+      where('managers', 'array-contains', currentUser.id)
     );
 
     unsubscribeRef.current = onSnapshot(leagueQuery, async (querySnapshot) => {
@@ -211,6 +152,7 @@ const UserHome = () => {
     }
   };
 
+  
   const sortedRowsNormal = managers.map((manager, index) => ({
     id: index,
     username: manager.details.username,
@@ -264,7 +206,7 @@ const UserHome = () => {
     for (let manager of managers){
       if (manager.details.username === event.value){
 
-        setPlayerTeamFilter(manager.details);
+        setPlayerTeamFilter(manager);
       }
     }
 
@@ -355,14 +297,10 @@ const UserHome = () => {
           <div className="main">
             {menuItem === "home" ? ( 
             <main>
-              {userData ? (
-                <>
-                  <h1>Welcome back, {userData.username}</h1>
-                  <h2>Points: {userData.score}</h2>
-                </>
-              ) : (
-                <h1>Loading</h1>
-              )}
+              <>
+                <h1>Welcome back, {currentUser.details.username}</h1>
+                <h2>Points: {currentUser.details.score}</h2>
+              </>
               <StatsFilter isFantasyStats={isFantasyStats} handleStatsChange={handleStatsChange} />
               {managers && managers.length > 0 && (
                 isFantasyStats ? (
@@ -404,12 +342,12 @@ const UserHome = () => {
             ) : null
             }
           </div>
+          
           <div className="cards">
             <div className="search-bar">
               <FaSearch className='search-icon'/>
               <input type="text" placeholder="Search..." />
             </div>
-
             <Card title="Card 1" caption="Lorem ipsum dolor sit amet, consectetur adipiscing elit." />
             <Card title="Card 2" caption="Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
           </div>

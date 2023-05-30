@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { setItem, getItem, getAllItems, setItems, deleteAllItems } from './indexedDB';
-import { getDocs, getDoc, doc, query, where, collection, onSnapshot } from 'firebase/firestore';
+import { getDocs, getDoc, doc, query, where, collection, onSnapshot, setDoc, addDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 const UserContext = createContext();
@@ -113,7 +113,6 @@ export const UserProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    
     fetchPlayerDataOnRefresh();
   }, [fetchPlayerDataOnRefresh]);
 

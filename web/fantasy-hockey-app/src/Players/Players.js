@@ -5,6 +5,11 @@ import { makeStyles } from '@material-ui/core/styles';
 import { PositionFilter, StatsFilter, TeamFilter, ManagerFilter, PlayerFilter } from './TableFilters';
 import './Players.css';
 
+import { BsPlus } from "react-icons/bs";
+import { MdOutlineSwapHoriz } from "react-icons/md";
+import { BiMinus } from "react-icons/bi";
+
+
 import { Grid } from '@material-ui/core'; // Import Grid
 
 const useStyles = makeStyles((theme) => ({
@@ -13,6 +18,7 @@ const useStyles = makeStyles((theme) => ({
       justifyContent: 'center',
       alignItems: 'center',
       padding: '20px',
+      width: '100%'
     },
     row: {
       '&:nth-of-type(odd)': {
@@ -22,24 +28,29 @@ const useStyles = makeStyles((theme) => ({
     columnHeader: {
       backgroundColor: '#3f51b5', // Dark blue for column headers
       color: '#ffffff', // White color for header text
-      fontSize: '1em',
+      fontSize: '1.1em',
     },
     boldCell: {
       fontWeight: 'bold',
-      fontSize: '1em', // Increase font size
+      fontSize: '1.1em', // Increase font size
       borderRight: '1px solid #ddd', // Add right border
     },
     positionColumn: {
       borderRight: '1px solid #ddd', // Light grey border on the right side
     },
     cell: {
-      fontSize: '0.85em',  // Set this to your desired font size
+      fontSize: '0.9em',  // Set this to your desired font size
     },
+    iconCell: {
+      width: '25px',
+      height: '25px',
+      cursor: 'pointer',
+    }
   }));
 
 const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
     const classes = useStyles();
-    const { currentUser, leagueSettings, players, teams, managers } = useUser();
+    const { currentUser, setCurrentUser, leagueSettings, players, teams, managers, setManagers } = useUser();
     const [playerFantasyStats, setPlayerFantasyStats] = useState([]);
     const [playerStats, setPlayerStats] = useState([]);
 
@@ -65,11 +76,22 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
                 if (lastStats)
                 {
                     let playerTeam = "";
+                    let playerAction = "FA";
 
                     for (let team of teams){
                         if (team.data.team_details.id === player.data.player_details.teamID){
                             playerTeam = team.data.team_details.abbreviation;
                         }
+                    }
+
+                    for (let manager of managers){
+                      if (manager.details.players.length > 0 && manager.details.players.includes(player.id.toString())){
+                        playerAction = "TAKEN";
+                      }
+                    }
+
+                    if (currentUser.details.players.length > 0 && currentUser.details.players.includes(player.id.toString())){
+                      playerAction = "USER";
                     }
 
                     if (player.data.player_details.positionCode == "G"){
@@ -81,6 +103,7 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
                 
                         temp_playerStats.push({
                             ...player,
+                            action: playerAction,
                             playerId: player.data.player_details.id,
                             name: player.data.player_details.name,
                             team: playerTeam,
@@ -94,6 +117,7 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
                         });
                         temp_playerFantasyStats.push({
                         ...player,
+                        action: playerAction,
                         playerId: player.data.player_details.id,
                         name: player.data.player_details.name,
                         team: playerTeam,
@@ -117,6 +141,7 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
 
                         temp_playerStats.push({
                             ...player,
+                            action: playerAction,
                             playerId: player.data.player_details.id,
                             name: player.data.player_details.name,
                             team: playerTeam,
@@ -133,6 +158,7 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
                         });
                         temp_playerFantasyStats.push({
                         ...player,
+                        action: playerAction,
                         playerId: player.data.player_details.id,
                         name: player.data.player_details.name,
                         team: playerTeam,
@@ -154,8 +180,6 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
         setPlayerFantasyStats(temp_playerFantasyStats);
         setPlayerStats(temp_playerStats);
         }
-
-        
       }, [players, teams, leagueSettings]);
 
     const handleStatsChange = (event) => {
@@ -193,6 +217,44 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
       </div>
     );
 
+    const handlePlayerActionClick = (action, params) => {
+      if (action === "FA" && leagueSettings.rosterSize - currentUser.players.length > 0){
+        let tempCurrentUser = currentUser;
+        tempCurrentUser.players.push(params.row.id.toString());
+        setCurrentUser(tempCurrentUser);
+
+        let tempManagers = managers;
+        for (let manager of tempManagers){
+          if (manager.details.username === currentUser.username){
+            manager.details.players.push(params.row.id.toString());
+          }
+        }
+        alert("Player added to your roster!");
+      }
+      else if (action === "FA" && leagueSettings.rosterSize - currentUser.players.length <= 0){
+        alert("You have reached your roster limit!");
+      }
+      else if (action === "USER"){
+        let tempCurrentUser = currentUser;
+        tempCurrentUser.players = tempCurrentUser.players.filter((player) => player !== params.row.id.toString());
+        setCurrentUser(tempCurrentUser);
+        alert("Player removed from your roster!");
+        
+        let tempManagers = managers;
+        for (let manager of tempManagers){
+          if (manager.details.username === currentUser.username){
+            manager.details.players = manager.details.players.filter((player) => player !== params.row.id.toString());
+            manager.player_data = manager.player_data.filter((player) => player.player_details.id !== params.row.id.toString());
+          }
+        }
+
+        freeAgents.push(params.row.id.toString());
+      }
+
+      // Add a toast message here
+
+    }
+
     useEffect(() => {
       let tempFreeAgents = [];
       for (let manager of managers){
@@ -203,12 +265,19 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
       setFreeAgents(tempFreeAgents);
     }, [managers])
 
-    // Define columns for the DataGrid
     const columns = [
+        {
+          field: "action",
+          headerName: "",
+          width: 10,
+          renderCell: (params) => (
+            <>{params.value === "FA" ? (<BsPlus onClick={() => handlePlayerActionClick("FA", params)} className={classes.iconCell}/>) : (params.value === "TAKEN" ? (<MdOutlineSwapHoriz  onClick={() => handlePlayerActionClick("TAKEN", params)} className={classes.iconCell}/>) : (<BiMinus onClick={() => handlePlayerActionClick("USER", params)} className={classes.iconCell}/>))}</>
+          )
+        },
         { 
           field: 'name', 
           headerName: 'Name', 
-          width: 85, 
+          width: 110, 
           cellClassName: classes.boldCell,
           renderCell: (params) => (
             <div className={classes.cell}>
@@ -223,8 +292,8 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
           width: 0, 
           renderCell: renderCell
         },
-        { field: 'team', headerName: 'Team', width: 30, renderCell: renderCell, },
-        { field: 'fantasyPoints', headerName: 'Points', width: 55, renderCell: (params) => (
+        { field: 'team', headerName: 'Team', width: 50, renderCell: renderCell, },
+        { field: 'fantasyPoints', headerName: 'Points', width: 75, renderCell: (params) => (
           <div className={classes.cell}>
             <strong>{params.value}</strong>
           </div>
@@ -243,6 +312,7 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
         { field: 'goalsAgainst', headerName: 'GA', width: 0, renderCell: renderCell, },
       ];
 
+      console.log(selectedManager);
     return (
         <div className="players-page">
           {currentUser && playerStats ? (
@@ -274,7 +344,7 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
                               row.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
                               selectedPosition.includes(row.position) &&
                               (selectedTeam === "" || row.team === selectedTeam) &&
-                              (selectedManager === "" || selectedManager.players.includes(row.id.toString())) &&
+                              (selectedManager === "" || (selectedManager.details.players.length > 0 && selectedManager.details.players.includes(row.id.toString()))) &&
                               (selectedPlayer === "" || selectedPlayer === "All Players" || (selectedPlayer === "Free Agents" && !freeAgents.includes(row.id.toString())) ||
                               (selectedPlayer === "All Taken" && freeAgents.includes(row.id.toString())))
                           )}
@@ -295,7 +365,7 @@ const Players = ({managerFilter, teamFilter, positionFilter, playerFilter}) => {
                               row.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
                               selectedPosition.includes(row.position) &&
                               (selectedTeam === "" || row.team === selectedTeam) &&
-                              (selectedManager === "" || selectedManager.details.players.includes(row.id.toString())) &&
+                              (selectedManager === "" || (selectedManager.details.players.length > 0 && selectedManager.details.players.includes(row.id.toString()))) &&
                               (selectedPlayer === "" || selectedPlayer === "All Players" || (selectedPlayer === "Free Agents" && !freeAgents.includes(row.id.toString())) ||
                               (selectedPlayer === "All Taken" && freeAgents.includes(row.id.toString())))
                           )}

@@ -257,7 +257,7 @@ export const ManagerFilter = ({ selectedManager, handleManagerChange, managers})
       <Select
         labelId="manager-select-label"
         id="manager-select"
-        value={(selectedManager && selectedManager !== "") ? selectedManager.username : "All Managers"}
+        value={(selectedManager && selectedManager !== "") ? selectedManager.details.username : "All Managers"}
         onChange={handleManagerChange}
       >
         <MenuItem className={classes.menuItem} value={"All Managers"}>All Managers</MenuItem>
@@ -268,7 +268,6 @@ export const ManagerFilter = ({ selectedManager, handleManagerChange, managers})
         ))}
       </Select>
     ): <></>}
-      
     </FormControl>
   );
 }

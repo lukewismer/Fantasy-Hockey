@@ -3,7 +3,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../UserContext';
-import { getDocs, query, where, collection } from 'firebase/firestore';
+import { getDoc, doc } from 'firebase/firestore';
 import './Login.css';
 
 const LoginPage = () => {
@@ -18,21 +18,20 @@ const LoginPage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      const userQuery = query(
-        collection(db, 'users'),
-        where('email', '==', user.email)
-      );
-      const querySnapshot = await getDocs(userQuery);
+      const documentRef = doc(db, "users", user.uid);
+  
+      // Retrieve the document data
+      const documentSnapshot = await getDoc(documentRef);
 
-      querySnapshot.forEach((doc) => {
-        const userData = { uid: user.uid, ...doc.data() };
-        setCurrentUser(userData);
-        navigate({ pathname: '/home', state: { userData } });
-      });
+      const userData = documentSnapshot.data();
+      
+      setCurrentUser(userData);
+      navigate({ pathname: '/home', state: { userData } });
 
     } catch (error) {
       setErrorMessage(error.message);
